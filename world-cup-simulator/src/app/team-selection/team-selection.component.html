@@ -1,0 +1,62 @@
+<div class="container">
+    <div class="header">
+        <h2>Team Selection</h2>
+    </div>
+    <div class="team-count">
+        <p>Select your 32 teams for the World Cup! ({{ selectedTeams.length }}/32 selected)</p>
+    </div>
+    <div class="team-selection">
+        <div class="predefined-teams">
+            <label for="teamSelect">Choose from pre-defined teams:</label>
+            <div class="select-container">
+                <select id="teamSelect">
+                    <option value="">-- Select a team --</option>
+                    <option *ngFor="let team of teams" [value]="team">{{ team }}</option>
+                </select>
+                <button (click)="addPreDefinedTeam()" class="btn-add-predefined">Add Selected Team</button>
+            </div>
+        </div>
+        
+        <div class="custom-team">
+            <p>Or create your own team:</p>
+            <button (click)="addTeam()" class="btn-add-custom">Add Custom Team</button>
+        </div>
+        
+        <div class="selected-teams">
+            <h3>Your Selected Teams:</h3>
+            <div class="teams-grid" *ngIf="selectedTeams.length > 0; else noTeams">
+                <div *ngFor="let team of sortedSelectedTeams; let i = index" class="team-card">
+                    <div class="team-info">
+                        <h4>{{ team.name }}</h4>
+                        <p><strong>Country:</strong> {{ team.country }}</p>
+                        <p><strong>ELO Rating:</strong> {{ team.elo }}</p><p></p>
+                        <p><strong>FIFA Code:</strong> {{ team.countryCode }}</p>
+                    </div>
+                    <button (click)="removeTeam(selectedTeams.indexOf(team))" class="btn-remove">Remove</button>
+                </div>
+            </div>
+            <ng-template #noTeams>
+                <p class="no-teams">No teams selected yet. Start by adding some teams!</p>
+            </ng-template>
+        </div>
+        
+        <div class="start-button" *ngIf="selectedTeams.length > 0">
+            <button 
+                (click)="startTournament()" 
+                class="btn-start"
+                [disabled]="selectedTeams.length !== 32">
+                Start Tournament
+                <span *ngIf="selectedTeams.length !== 32">
+                    ({{ 32 - selectedTeams.length }} more teams needed)
+                </span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Add Team Form Modal -->
+    <app-add-team-form 
+        *ngIf="showAddTeamForm"
+        (teamAdded)="onTeamAdded($event)"
+        (formClosed)="onFormClosed()">
+    </app-add-team-form>
+</div>
