@@ -1,0 +1,242 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: Arial, sans-serif;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.header h2 {
+  background: linear-gradient(135deg, #007bff, #28a745);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 2.5rem;
+  margin: 0;
+}
+
+.team-count {
+  font-size: 1.2rem;
+  color: #6c757d;
+}
+
+.team-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.predefined-teams {
+  background: linear-gradient(135deg, #156ec7, #1ea8a8);
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.predefined-teams label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: #c8e910;
+}
+
+.select-container {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.select-container select {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.75rem;
+  border: 2px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: white;
+}
+
+.select-container select:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.custom-team {
+  background: linear-gradient(135deg, #587b9e, #b32626);
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #b8daff;
+  text-align: center;
+}
+
+.custom-team p {
+  color: rgb(76, 197, 52);
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.btn-add-predefined, 
+.btn-add-custom, 
+.btn-start, 
+.btn-remove {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: bold;
+}
+
+.btn-add-predefined {
+  background: linear-gradient(135deg, #d6145e, #d4d114);
+  color: white;
+}
+
+.btn-add-predefined:hover {
+  background-color: #218838;
+}
+
+.btn-add-custom {
+  background: linear-gradient(135deg, #007bff, #00b300);
+  color: white;
+  font-size: 1.1rem;
+  padding: 1rem 2rem;
+}
+
+.btn-add-custom:hover {
+  background-color: #0056b3;
+}
+
+.btn-remove {
+  background-color: #dc3545;
+  color: white;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.btn-remove:hover {
+  background-color: #c82333;
+}
+
+.selected-teams {
+  margin-top: 2rem;
+}
+
+.selected-teams h3 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.teams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.team-card {
+  background: white;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+
+.team-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.team-info h4 {
+  margin: 0 0 0.5rem 0;
+  color: #007bff;
+  font-size: 1.2rem;
+}
+
+.team-info p {
+  margin: 0.25rem 0;
+  color: #495057;
+  font-size: 0.9rem;
+}
+
+.no-teams {
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+  padding: 2rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #dee2e6;
+}
+
+.start-button {
+  text-align: center;
+  margin-top: 2rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #28a745, #20c997);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
+}
+
+.btn-start {
+  background-color: #fff;
+  color: #28a745;
+  font-size: 1.3rem;
+  padding: 1rem 3rem;
+  border: 3px solid #28a745;
+  transition: all 0.3s ease;
+}
+
+.btn-start:hover:not(:disabled) {
+  background-color: #28a745;
+  color: white;
+  transform: scale(1.05);
+}
+
+.btn-start:disabled {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border-color: #dee2e6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-start span {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: normal;
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .header h2 {
+    font-size: 2rem;
+  }
+  
+  .select-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .teams-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .btn-start {
+    font-size: 1.1rem;
+    padding: 0.875rem 2rem;
+  }
+}

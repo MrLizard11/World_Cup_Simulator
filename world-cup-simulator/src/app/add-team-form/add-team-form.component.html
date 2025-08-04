@@ -1,0 +1,71 @@
+<div class="form-overlay">
+  <div class="form-container">
+    <h3>Add New Team</h3>
+    
+    <form [formGroup]="teamForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="name">Team Name *</label>
+        <input 
+          type="text" 
+          id="name" 
+          formControlName="name"
+          placeholder="e.g., Spain"
+          [class.error]="name?.invalid && name?.touched">
+        <div class="error-message" *ngIf="name?.invalid && name?.touched">
+          <span *ngIf="name?.errors?.['required']">Team name is required</span>
+          <span *ngIf="name?.errors?.['minlength']">Team name must be at least 2 characters</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="country">Country *</label>
+        <input 
+          type="text" 
+          id="country" 
+          formControlName="country"
+          placeholder="e.g., Spain"
+          [class.error]="country?.invalid && country?.touched">
+        <div class="error-message" *ngIf="country?.invalid && country?.touched">
+          <span *ngIf="country?.errors?.['required']">Country is required</span>
+          <span *ngIf="country?.errors?.['minlength']">Country must be at least 2 characters</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="elo">ELO Rating *<a href="https://www.eloratings.net/">refer to this website</a></label>
+        <input 
+          type="number" 
+          id="elo" 
+          formControlName="elo"
+          placeholder="e.g., 1850"
+          [class.error]="elo?.invalid && elo?.touched">
+        <div class="error-message" *ngIf="elo?.invalid && elo?.touched">
+          <span *ngIf="elo?.errors?.['required']">ELO rating is required</span>
+          <span *ngIf="elo?.errors?.['min']">ELO rating must be at least 800</span>
+          <span *ngIf="elo?.errors?.['max']">ELO rating cannot exceed 2500</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="countryCode">FIFA Country Code *</label>
+        <input 
+          type="text" 
+          id="countryCode" 
+          formControlName="countryCode"
+          placeholder="e.g., ESP"
+          maxlength="3"
+          style="text-transform: uppercase"
+          [class.error]="countryCode?.invalid && countryCode?.touched">
+        <div class="error-message" *ngIf="countryCode?.invalid && countryCode?.touched">
+          <span *ngIf="countryCode?.errors?.['required']">FIFA country code is required</span>
+          <span *ngIf="countryCode?.errors?.['minlength'] || countryCode?.errors?.['maxlength']">Country code must be exactly 3 characters</span>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" (click)="onCancel()">Cancel</button>
+        <button type="submit" class="btn-submit" [disabled]="teamForm.invalid">Add Team</button>
+      </div>
+    </form>
+  </div>
+</div>
