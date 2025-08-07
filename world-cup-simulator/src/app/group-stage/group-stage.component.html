@@ -1,0 +1,62 @@
+<div class="container">
+    <p><a routerLink="/team-selection" routerLinkActive="active"> back to team selection page</a></p>
+    <h2>Group Stage</h2>
+
+    <div class="button-container">
+        <button (click)="runAllMatches()">Simulate Every Match</button>
+        <div class="toggle-buttons">
+            <button class="show-matches-btn" [class.active]="showMatches" (click)="showMatches = !showMatches">
+                Matches
+            </button>
+            <button class="group-standings-btn" [class.active]="showGroupStandings" (click)="showGroupStandings = !showGroupStandings">Group Standings</button>
+        </div>
+    </div>
+
+    <div *ngIf="showMatches" class="matches-section">
+        <div class="group-container" *ngFor="let group of groups">
+            <h3>Group {{ group.name }}</h3>
+            <div class="group-matches">
+                <div class="match-details" *ngFor="let match of group.matches">
+                    <span class="team">{{ match.teamA.name }}</span>
+                    <span class="score">{{ match.scoreA }} - {{ match.scoreB }}</span>
+                    <span class="team">{{ match.teamB.name }}</span>
+                    <button class="simulate-btn" *ngIf="!match.played" (click)="simulateMatch(match)">Simulate Match</button>
+                    <span class="played-indicator" *ngIf="match.played">✓ Played</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div *ngIf="showGroupStandings" class="matches-section">
+        <div class="group-container" *ngFor="let group of groups">
+            <h3>Group {{ group.name }} - Standings</h3>
+            <div class="group-standings-table">
+                <div class="standings-header">
+                    <span class="team-col">Team</span>
+                    <span class="stat-col">Pts</span>
+                    <span class="stat-col">MP</span>
+                    <span class="stat-col">W</span>
+                    <span class="stat-col">D</span>
+                    <span class="stat-col">L</span>
+                    <span class="stat-col">GF</span>
+                    <span class="stat-col">GA</span>
+                    <span class="stat-col">GD</span>
+                </div>
+                <div class="standings-row" *ngFor="let standing of getStandingsForGroup(group.id); let i = index">
+                    <span class="team-col">{{ i + 1 }}. {{ standing.team.name }}</span>
+                    <span class="stat-col">{{ standing.points }}</span>
+                    <span class="stat-col">{{ standing.matchesPlayed }}</span>
+                    <span class="stat-col">{{ standing.wins }}</span>
+                    <span class="stat-col">{{ standing.draws }}</span>
+                    <span class="stat-col">{{ standing.losses }}</span>
+                    <span class="stat-col">{{ standing.goalsFor }}</span>
+                    <span class="stat-col">{{ standing.goalsAgainst }}</span>
+                    <span class="stat-col">{{ standing.goalDifference >= 0 ? '+' + standing.goalDifference : standing.goalDifference }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="go-to-next-stage">
+        <button><a routerLink="/knockout-stage" routerLinkActive="active" (click)="goToNextStage()">Go to Knockout Stage</a></button>
+</div>

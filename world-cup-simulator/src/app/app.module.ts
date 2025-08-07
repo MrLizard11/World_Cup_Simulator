@@ -6,12 +6,17 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { TeamSelectionComponent } from './team-selection/team-selection.component';
 import { AddTeamFormComponent } from './add-team-form/add-team-form.component';
+import { GroupStageComponent } from './group-stage/group-stage.component';
+import { KnockoutStageComponent } from './knockout-stage/knockout-stage.component';
+
 
 @NgModule({
   declarations: [
     AppComponent,
     TeamSelectionComponent,
-    AddTeamFormComponent
+    AddTeamFormComponent,
+    GroupStageComponent,
+    KnockoutStageComponent,
   ],
   imports: [
     BrowserModule,

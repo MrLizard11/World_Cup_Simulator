@@ -1,12 +1,6 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-
-export interface Team {
-  name: string;
-  country: string;
-  elo: number;
-  countryCode: string;
-}
+import { Team } from '../models/team.model';
 
 @Component({
   selector: 'app-add-team-form',
@@ -47,3 +41,5 @@ export class AddTeamFormComponent {
   get elo() { return this.teamForm.get('elo'); }
   get countryCode() { return this.teamForm.get('countryCode'); }
 }
+export { Team };
+
