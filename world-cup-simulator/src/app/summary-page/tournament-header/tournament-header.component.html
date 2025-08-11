@@ -1,0 +1,74 @@
+<!-- Champion Section -->
+<div class="champion-section">
+  <div class="trophy-container">
+    <div class="trophy">🏆</div>
+    <h1 class="tournament-title">World Cup Champion</h1>
+  </div>
+  
+  <div *ngIf="champion" class="champion-card">
+    <div class="team-flag">
+      {{ champion.countryCode }}
+    </div>
+    <div class="champion-info">
+      <h2 class="champion-name">{{ champion.name }}</h2>
+      <p class="champion-country">{{ champion.country }}</p>
+      <div class="champion-stats">
+        <span class="elo-rating">ELO: {{ champion.elo }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Final Match Results -->
+<div *ngIf="finalMatch" class="final-match-section">
+  <h3>🥇 Final Match</h3>
+  <div class="final-match-card">
+    <div class="match-teams">
+      <div class="team-score">
+        <span class="team-name">{{ finalMatch.teamA.name }}</span>
+        <span class="score">{{ finalMatch.scoreA }}</span>
+      </div>
+      <div class="vs">VS</div>
+      <div class="team-score">
+        <span class="score">{{ finalMatch.scoreB }}</span>
+        <span class="team-name">{{ finalMatch.teamB.name }}</span>
+      </div>
+    </div>
+    <div *ngIf="finalMatch.wentToPenalties" class="penalty-info">
+      <p>🥅 Decided by Penalties: {{ finalMatch.penaltyScoreA }} - {{ finalMatch.penaltyScoreB }}</p>
+    </div>
+  </div>
+</div>
+
+<!-- Top 4 Teams -->
+<div class="top-teams-section">
+  <h3>🏅 Final Standings</h3>
+  <div class="podium">
+    <!-- Champion -->
+    <div *ngIf="topPerformers.champion" class="podium-position gold">
+      <div class="medal">🥇</div>
+      <div class="position-info">
+        <h4>{{ topPerformers.champion.team.name }}</h4>
+        <p>Champion</p>
+      </div>
+    </div>
+    
+    <!-- Runner-up -->
+    <div *ngIf="topPerformers.runnerUp" class="podium-position silver">
+      <div class="medal">🥈</div>
+      <div class="position-info">
+        <h4>{{ topPerformers.runnerUp.team.name }}</h4>
+        <p>Runner-up</p>
+      </div>
+    </div>
+    
+    <!-- Semifinalists -->
+    <div *ngFor="let semifinalist of topPerformers.semifinalists" class="podium-position bronze">
+      <div class="medal">🥉</div>
+      <div class="position-info">
+        <h4>{{ semifinalist.team.name }}</h4>
+        <p>Semifinalist</p>
+      </div>
+    </div>
+  </div>
+</div>

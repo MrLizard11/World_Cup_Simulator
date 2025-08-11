@@ -1,0 +1,21 @@
+<div class="match-details" 
+     [class.small]="size === 'small'"
+     [class.medium]="size === 'medium'" 
+     [class.large]="size === 'large'"
+     [class.horizontal]="layout === 'horizontal'"
+     [class.vertical]="layout === 'vertical'"
+     (click)="onMatchClick()">
+  
+  <span class="team" [class.winner]="isWinner('A')">{{ match?.teamA?.name || 'TBD' }}</span>
+  <span class="score">{{ getScoreDisplay() }}</span>
+  <span class="team" [class.winner]="isWinner('B')">{{ match?.teamB?.name || 'TBD' }}</span>
+  
+  <button class="simulate-btn" 
+          *ngIf="showSimulateButton && !match?.played"
+          (click)="onSimulate(); $event.stopPropagation()">
+    {{ buttonText }}
+  </button>
+  
+  <span class="played-indicator" 
+        *ngIf="showPlayedIndicator && match?.played">✓</span>
+</div>

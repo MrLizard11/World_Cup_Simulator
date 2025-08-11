@@ -10,21 +10,6 @@ import { KnockoutStageService } from './knockout-stage.service';
 })
 export class KnockoutStageComponent implements OnInit, OnDestroy {
 
-  top16: Team[] = [];
-
-  // Left bracket (Group A,C,E,G winners + Group B,D,F,H runners-up)
-  leftBracketRoundOf16: KnockoutMatch[] = [];
-  leftBracketQuarterFinals: KnockoutMatch[] = [];
-  leftBracketSemiFinal: KnockoutMatch | null = null;
-
-  // Right bracket (Group B,D,F,H winners + Group A,C,E,G runners-up)
-  rightBracketRoundOf16: KnockoutMatch[] = [];
-  rightBracketQuarterFinals: KnockoutMatch[] = [];
-  rightBracketSemiFinal: KnockoutMatch | null = null;
-
-  finalMatch: KnockoutMatch | null = null;
-  champion: Team | null = null;
-
   // Round simulation tracking
   roundOf16Simulated: boolean = false;
   quarterFinalsSimulated: boolean = false;
@@ -34,18 +19,63 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
 
   constructor(private knockoutStageService: KnockoutStageService) { }
 
+  // Getter methods to access service data directly
+  get top16(): Team[] {
+    return this.knockoutStageService.top16;
+  }
+
+  get leftBracketRoundOf16(): KnockoutMatch[] {
+    return this.knockoutStageService.leftBracketRoundOf16;
+  }
+
+  get rightBracketRoundOf16(): KnockoutMatch[] {
+    return this.knockoutStageService.rightBracketRoundOf16;
+  }
+
+  get leftBracketQuarterFinals(): KnockoutMatch[] {
+    return this.knockoutStageService.leftBracketQuarterFinals;
+  }
+
+  get rightBracketQuarterFinals(): KnockoutMatch[] {
+    return this.knockoutStageService.rightBracketQuarterFinals;
+  }
+
+  get leftBracketSemiFinal(): KnockoutMatch | null {
+    return this.knockoutStageService.leftBracketSemiFinal;
+  }
+
+  get rightBracketSemiFinal(): KnockoutMatch | null {
+    return this.knockoutStageService.rightBracketSemiFinal;
+  }
+
+  get finalMatch(): KnockoutMatch | null {
+    return this.knockoutStageService.finalMatch;
+  }
+
+  get champion(): Team | null {
+    if (this.finalMatch?.played && this.finalMatch.winner) {
+      return this.finalMatch.winner === this.finalMatch.teamA.name ? 
+             this.finalMatch.teamA : this.finalMatch.teamB;
+    }
+    return null;
+  }
+
   ngOnInit(): void {
     // Scroll to top when component initializes
     window.scrollTo(0, 0);
 
-    // Reset service state first to ensure clean initialization
-    this.knockoutStageService.resetKnockoutStage();
+    // Initialize knockout stage through service
+    const initialState = this.knockoutStageService.initializeKnockoutStage();
+    
+    // Set initial round completion status
+    const status = initialState.roundCompletionStatus;
+    this.roundOf16Simulated = status.roundOf16Simulated;
+    this.quarterFinalsSimulated = status.quarterFinalsSimulated;
+    this.semiFinalsSimulated = status.semiFinalsSimulated;
+    this.finalSimulated = status.finalSimulated;
+    this.allMatchesSimulated = status.allMatchesSimulated;
 
-    this.knockoutStageService.loadTop16Teams();
-    this.top16 = this.knockoutStageService.top16;
-    this.initializeKnockoutStage();
-
-    // Check initial round completion status (should be all false after reset)
+    // Check initial round completion status from service
     this.updateRoundCompletionFromService();
   }
 
@@ -54,20 +84,6 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
 
     // Check if any rounds have been completed through individual match simulation
     this.updateRoundCompletionFromService();
-  }
-
-  initializeKnockoutStage(): void {
-    if (this.top16.length >= 16) {
-      // Draw the round of 16 matches using the loaded teams
-      this.knockoutStageService.drawRoundOf16Matches(this.top16);
-
-      // Get the drawn matches from the service
-      this.leftBracketRoundOf16 = this.knockoutStageService.leftBracketRoundOf16 || [];
-      this.rightBracketRoundOf16 = this.knockoutStageService.rightBracketRoundOf16 || [];
-
-    } else {
-      console.error('Not enough teams loaded for knockout stage. Found:', this.top16.length);
-    }
   }
 
   runAllRoundOf16() {
@@ -84,11 +100,10 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
       }
     });
     this.knockoutStageService.checkAndAdvanceToQuarterFinals();
-    this.leftBracketQuarterFinals = this.knockoutStageService.leftBracketQuarterFinals;
-    this.rightBracketQuarterFinals = this.knockoutStageService.rightBracketQuarterFinals;
     this.roundOf16Simulated = true;
   }
-   runQuarterFinals() {
+  
+  runQuarterFinals() {
     if (this.quarterFinalsSimulated || !this.areAllRoundOf16MatchesPlayed()) return;
 
     this.leftBracketQuarterFinals.forEach(match => {
@@ -102,8 +117,6 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
       }
     });
     this.knockoutStageService.checkAndAdvanceToSemiFinals();
-    this.leftBracketSemiFinal = this.knockoutStageService.leftBracketSemiFinal;
-    this.rightBracketSemiFinal = this.knockoutStageService.rightBracketSemiFinal;
     this.quarterFinalsSimulated = true;
   }
 
@@ -117,7 +130,6 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
       this.simulateMatch(this.rightBracketSemiFinal);
     }
     this.knockoutStageService.checkAndAdvanceToFinals();
-    this.finalMatch = this.knockoutStageService.finalMatch;
     this.semiFinalsSimulated = true;
   }
 
@@ -145,8 +157,6 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
       }
     });
     this.knockoutStageService.checkAndAdvanceToQuarterFinals();
-    this.leftBracketQuarterFinals = this.knockoutStageService.leftBracketQuarterFinals;
-    this.rightBracketQuarterFinals = this.knockoutStageService.rightBracketQuarterFinals;
 
     this.leftBracketQuarterFinals.forEach(match => {
       if (!match.played) {
@@ -159,8 +169,6 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
       }
     });
     this.knockoutStageService.checkAndAdvanceToSemiFinals();
-    this.leftBracketSemiFinal = this.knockoutStageService.leftBracketSemiFinal;
-    this.rightBracketSemiFinal = this.knockoutStageService.rightBracketSemiFinal;
 
     if (this.leftBracketSemiFinal && !this.leftBracketSemiFinal.played) {
       this.simulateMatch(this.leftBracketSemiFinal);
@@ -169,7 +177,6 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
       this.simulateMatch(this.rightBracketSemiFinal);
     }
     this.knockoutStageService.checkAndAdvanceToFinals();
-    this.finalMatch = this.knockoutStageService.finalMatch;
 
     if (this.finalMatch && !this.finalMatch.played) {
       this.simulateMatch(this.finalMatch);
@@ -181,7 +188,7 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
     this.quarterFinalsSimulated = true;
     this.semiFinalsSimulated = true;
     this.finalSimulated = true;
-  } 
+  }
 
   isWinner(match: KnockoutMatch, team: 'A' | 'B'): boolean {
     if (!match.played || !match.winner) return false;
@@ -241,7 +248,8 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
       (this.rightBracketSemiFinal?.played || false);
   }
 
-  private updateRoundCompletionFromService(): void { // Check the service for round completion status
+  private updateRoundCompletionFromService(): void { 
+    // Check the service for round completion status
     const result = this.knockoutStageService.updateRoundCompletionStatus({
       roundOf16Simulated: this.roundOf16Simulated,
       quarterFinalsSimulated: this.quarterFinalsSimulated,
@@ -254,22 +262,14 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
       // Update component state flags based on service response
       if (result.updates.roundOf16Simulated !== undefined) {
         this.roundOf16Simulated = result.updates.roundOf16Simulated;
-        // Update local bracket references
-        this.leftBracketQuarterFinals = this.knockoutStageService.leftBracketQuarterFinals;
-        this.rightBracketQuarterFinals = this.knockoutStageService.rightBracketQuarterFinals;
       }
 
       if (result.updates.quarterFinalsSimulated !== undefined) {
         this.quarterFinalsSimulated = result.updates.quarterFinalsSimulated;
-        // Update local bracket references
-        this.leftBracketSemiFinal = this.knockoutStageService.leftBracketSemiFinal;
-        this.rightBracketSemiFinal = this.knockoutStageService.rightBracketSemiFinal;
       }
 
       if (result.updates.semiFinalsSimulated !== undefined) {
         this.semiFinalsSimulated = result.updates.semiFinalsSimulated;
-        // Update local bracket reference
-        this.finalMatch = this.knockoutStageService.finalMatch;
       }
 
       if (result.updates.finalSimulated !== undefined) {
@@ -283,19 +283,8 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Reset the knockout stage when leaving the page
-    this.knockoutStageService.resetKnockoutStage();
-
-    // Reset component state
-    this.top16 = [];
-    this.leftBracketRoundOf16 = [];
-    this.rightBracketRoundOf16 = [];
-    this.leftBracketQuarterFinals = [];
-    this.rightBracketQuarterFinals = [];
-    this.leftBracketSemiFinal = null;
-    this.rightBracketSemiFinal = null;
-    this.finalMatch = null;
-    this.champion = null;
+    // Cleanup through service
+    this.knockoutStageService.cleanupKnockoutStage();
 
     // Reset simulation tracking flags
     this.roundOf16Simulated = false;
@@ -303,8 +292,6 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
     this.semiFinalsSimulated = false;
     this.finalSimulated = false;
     this.allMatchesSimulated = false;
-
-    console.log('Knockout stage component destroyed and reset');
   }
 
 }

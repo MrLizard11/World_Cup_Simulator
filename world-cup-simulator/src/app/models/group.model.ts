@@ -30,3 +30,17 @@ export interface GroupStandings {
     goalDifference: number;
   }[];
 }
+
+export interface TeamStanding {
+  groupId: number;
+  groupName: string;
+  team: Team;
+  points: number;
+  matchesPlayed: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+}

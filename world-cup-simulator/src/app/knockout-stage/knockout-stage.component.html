@@ -1,137 +1,71 @@
 <div class="container">
     <div class="page-title">Knockout Stage</div>
 
-    <div class="simulate-round-button-list">
-        <button class="simulate-btn" 
-                (click)="runAllMatches()" 
-                [disabled]="!canSimulateAllMatches()"
-                [class.completed]="allMatchesSimulated">
-            {{ allMatchesSimulated ? 'All Matches Simulated' : 'Simulate All Matches' }}
-        </button>
-        <button class="simulate-round-button" 
-                (click)="runFinal()" 
-                [disabled]="!canSimulateFinal()"
-                [class.completed]="finalSimulated">
-            {{ finalSimulated ? 'Final Simulated' : (!areAllSemiFinalMatchesPlayed() ? 'Complete Semi-Finals First' : 'Simulate Final') }}
-        </button>
-        <button class="simulate-round-button" 
-                (click)="runSemiFinals()" 
-                [disabled]="!canSimulateSemiFinals()"
-                [class.completed]="semiFinalsSimulated">
-            {{ semiFinalsSimulated ? 'Semi-Finals Simulated' : (!areAllQuarterFinalMatchesPlayed() ? 'Complete Quarter-Finals First' : 'Simulate Semi-Finals') }}
-        </button>
-        <button class="simulate-round-button" 
-                (click)="runQuarterFinals()" 
-                [disabled]="!canSimulateQuarterFinals()"
-                [class.completed]="quarterFinalsSimulated">
-            {{ quarterFinalsSimulated ? 'Quarter-Finals Simulated' : (!areAllRoundOf16MatchesPlayed() ? 'Complete Round of 16 First' : 'Simulate Quarter-Finals') }}
-        </button>
-        <button class="simulate-round-button" 
-                (click)="runAllRoundOf16()" 
-                [disabled]="!canSimulateRoundOf16()"
-                [class.completed]="roundOf16Simulated">
-            {{ roundOf16Simulated ? 'Round of 16 Simulated' : 'Simulate All Round of 16' }}
-        </button>
-    </div>
+    <app-knockout-round-buttons
+        [allMatchesSimulated]="allMatchesSimulated"
+        [finalSimulated]="finalSimulated"
+        [semiFinalsSimulated]="semiFinalsSimulated"
+        [quarterFinalsSimulated]="quarterFinalsSimulated"
+        [roundOf16Simulated]="roundOf16Simulated"
+        [canSimulateAllMatches]="canSimulateAllMatches()"
+        [canSimulateFinal]="canSimulateFinal()"
+        [canSimulateSemiFinals]="canSimulateSemiFinals()"
+        [canSimulateQuarterFinals]="canSimulateQuarterFinals()"
+        [canSimulateRoundOf16]="canSimulateRoundOf16()"
+        [areAllSemiFinalMatchesPlayed]="areAllSemiFinalMatchesPlayed()"
+        [areAllQuarterFinalMatchesPlayed]="areAllQuarterFinalMatchesPlayed()"
+        [areAllRoundOf16MatchesPlayed]="areAllRoundOf16MatchesPlayed()"
+        (runAllMatches)="runAllMatches()"
+        (runFinal)="runFinal()"
+        (runSemiFinals)="runSemiFinals()"
+        (runQuarterFinals)="runQuarterFinals()"
+        (runAllRoundOf16)="runAllRoundOf16()">
+    </app-knockout-round-buttons>
 
     <div class="tournament-bracket">
-        <!-- Winner announcement at the top -->
-        <div class="winner-announcement" *ngIf="finalMatch && finalMatch.played">
-            <h2>🏆 Champion: {{ finalMatch.winner }}</h2>
-            <img src="assets/worldCup.png" alt="Trophy" class="trophy-image">
-        </div>
-        <div class="return-to-team-selection-btn">
-            <button class="return-to-team-selection" routerLink="/team-selection" routerLinkActive="active">Return to Team Selection</button>
-        </div>
+        <app-winner-announcment [finalMatch]="finalMatch"></app-winner-announcment>
 
         <!-- Bracket Tree Layout -->
         <div class="bracket-tree">
             <!-- Round of 16 Column -->
-            <div class="round-column round-of-16-column">
-                <div class="bracket-section left-bracket">
-                    <div class="match-details" *ngFor="let match of leftBracketRoundOf16">
-                        <span class="team" [class.winner]="isWinner(match, 'A')">{{ match.teamA.name || 'TBD' }}</span>
-                        <span class="score">{{ getScoreDisplay(match) }}</span>
-                        <span class="team" [class.winner]="isWinner(match, 'B')">{{ match.teamB.name || 'TBD' }}</span>
-                        <button class="simulate-btn" *ngIf="!match.played"
-                            (click)="simulateMatch(match)">Simulate</button>
-                        <span class="played-indicator" *ngIf="match.played">✓</span>
-                    </div>
-                </div>
-
-                <div class="bracket-section right-bracket">
-                    <div class="match-details" *ngFor="let match of rightBracketRoundOf16">
-                        <span class="team" [class.winner]="isWinner(match, 'A')">{{ match.teamA.name || 'TBD' }}</span>
-                        <span class="score">{{ getScoreDisplay(match) }}</span>
-                        <span class="team" [class.winner]="isWinner(match, 'B')">{{ match.teamB.name || 'TBD' }}</span>
-                        <button class="simulate-btn" *ngIf="!match.played"
-                            (click)="simulateMatch(match)">Simulate</button>
-                        <span class="played-indicator" *ngIf="match.played">✓</span>
-                    </div>
-                </div>
-            </div>
+            <app-knockout-column
+                [leftMatches]="leftBracketRoundOf16"
+                [rightMatches]="rightBracketRoundOf16"
+                [roundLabel]="'Round of 16'"
+                [columnClass]="'round-of-16-column'"
+                [showBothSides]="true"
+                (simulateMatch)="simulateMatch($event)">
+            </app-knockout-column>
 
             <!-- Quarter Finals Column -->
-            <div class="round-column quarter-finals-column">
-                <div class="bracket-section left-bracket">
-                    <div class="match-details" *ngFor="let match of leftBracketQuarterFinals">
-                        <span class="team" [class.winner]="isWinner(match, 'A')">{{ match.teamA.name || 'TBD' }}</span>
-                        <span class="score">{{ getScoreDisplay(match) }}</span>
-                        <span class="team" [class.winner]="isWinner(match, 'B')">{{ match.teamB.name || 'TBD' }}</span>
-                        <button class="simulate-btn" *ngIf="!match.played"
-                            (click)="simulateMatch(match)">Simulate</button>
-                        <span class="played-indicator" *ngIf="match.played">✓</span>
-                    </div>
-                </div>
-
-                <div class="bracket-section right-bracket">
-                    <div class="match-details" *ngFor="let match of rightBracketQuarterFinals">
-                        <span class="team" [class.winner]="isWinner(match, 'A')">{{ match.teamA.name || 'TBD' }}</span>
-                        <span class="score">{{ getScoreDisplay(match) }}</span>
-                        <span class="team" [class.winner]="isWinner(match, 'B')">{{ match.teamB.name || 'TBD' }}</span>
-                        <button class="simulate-btn" *ngIf="!match.played"
-                            (click)="simulateMatch(match)">Simulate</button>
-                        <span class="played-indicator" *ngIf="match.played">✓</span>
-                    </div>
-                </div>
-            </div>
+            <app-knockout-column
+                [leftMatches]="leftBracketQuarterFinals"
+                [rightMatches]="rightBracketQuarterFinals"
+                [roundLabel]="'Quarter Finals'"
+                [columnClass]="'quarter-finals-column'"
+                [showBothSides]="true"
+                (simulateMatch)="simulateMatch($event)">
+            </app-knockout-column>
 
             <!-- Semi Finals Column -->
-            <div class="round-column semi-finals-column">
-                <div class="bracket-section left-bracket">
-                    <div class="match-details" *ngIf="leftBracketSemiFinal">
-                        <span class="team" [class.winner]="isWinner(leftBracketSemiFinal, 'A')">{{ leftBracketSemiFinal.teamA.name || 'TBD' }}</span>
-                        <span class="score">{{ getScoreDisplay(leftBracketSemiFinal) }}</span>
-                        <span class="team" [class.winner]="isWinner(leftBracketSemiFinal, 'B')">{{ leftBracketSemiFinal.teamB.name || 'TBD' }}</span>
-                        <button class="simulate-btn" *ngIf="!leftBracketSemiFinal.played"
-                            (click)="simulateMatch(leftBracketSemiFinal)">Simulate</button>
-                        <span class="played-indicator" *ngIf="leftBracketSemiFinal.played">✓</span>
-                    </div>
-                </div>
-
-                <div class="bracket-section right-bracket">
-                    <div class="match-details" *ngIf="rightBracketSemiFinal">
-                        <span class="team" [class.winner]="isWinner(rightBracketSemiFinal, 'A')">{{ rightBracketSemiFinal.teamA.name || 'TBD' }}</span>
-                        <span class="score">{{ getScoreDisplay(rightBracketSemiFinal) }}</span>
-                        <span class="team" [class.winner]="isWinner(rightBracketSemiFinal, 'B')">{{ rightBracketSemiFinal.teamB.name || 'TBD' }}</span>
-                        <button class="simulate-btn" *ngIf="!rightBracketSemiFinal.played"
-                            (click)="simulateMatch(rightBracketSemiFinal)">Simulate</button>
-                        <span class="played-indicator" *ngIf="rightBracketSemiFinal.played">✓</span>
-                    </div>
-                </div>
-            </div>
+            <app-knockout-column
+                [leftMatches]="leftBracketSemiFinal ? [leftBracketSemiFinal] : []"
+                [rightMatches]="rightBracketSemiFinal ? [rightBracketSemiFinal] : []"
+                [roundLabel]="'Semi Finals'"
+                [columnClass]="'semi-finals-column'"
+                [showBothSides]="true"
+                (simulateMatch)="simulateMatch($event)">
+            </app-knockout-column>
 
             <!-- Final Column -->
-            <div class="round-column final-column">
-                <div class="match-details" *ngIf="finalMatch">
-                    <span class="team" [class.winner]="isWinner(finalMatch, 'A')">{{ finalMatch.teamA.name || 'TBD' }}</span>
-                    <span class="score">{{ getScoreDisplay(finalMatch) }}</span>
-                    <span class="team" [class.winner]="isWinner(finalMatch, 'B')">{{ finalMatch.teamB.name || 'TBD' }}</span>
-                    <button class="simulate-btn" *ngIf="!finalMatch.played"
-                        (click)="simulateMatch(finalMatch)">Simulate</button>
-                    <span class="played-indicator" *ngIf="finalMatch.played">✓</span>
-                </div>
-            </div>
+            <app-knockout-column
+                [leftMatches]="finalMatch ? [finalMatch] : []"
+                [rightMatches]="[]"
+                [roundLabel]="'Final'"
+                [columnClass]="'final-column'"
+                [showBothSides]="false"
+                (simulateMatch)="simulateMatch($event)">
+            </app-knockout-column>
         </div>
     </div>
 </div>

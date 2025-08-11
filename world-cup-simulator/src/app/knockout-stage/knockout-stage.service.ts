@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Team } from '../models';
-import { Group, Match, GroupStandings } from '../models/group.model';
+import { Group, Match, GroupStandings, TeamStanding } from '../models/group.model';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { KnockoutMatch } from '../models/knockouts.model';
 import { MatchesService } from '../group-stage/matches.service';
+import { TournamentStateService } from '../summary-page/tournament-state.service';
+import { KnockoutStage2ndService } from './knockout-stage-2nd.service';
 
 @Injectable({
   providedIn: 'root'
@@ -19,7 +21,10 @@ export class KnockoutStageService {
   rightBracketSemiFinal: KnockoutMatch | null = null;
   finalMatch: KnockoutMatch | null = null;
 
-  constructor() { }
+  constructor(
+    private tournamentState: TournamentStateService,
+    private simulationService: KnockoutStage2ndService
+  ) { }
 
   resetKnockoutStage(): void {
     
@@ -34,7 +39,7 @@ export class KnockoutStageService {
   }
 
   // Complete reset for starting a new tournament
-  completeReset(): void {
+  complete(): void {
     this.top16 = [];
     this.leftBracketRoundOf16 = [];
     this.rightBracketRoundOf16 = [];
@@ -64,7 +69,7 @@ export class KnockoutStageService {
   }
 
   // Get top 16 teams from group standings
-   getTop16Teams(groupStandings: any[]): Team[] { 
+   getTop16Teams(groupStandings: TeamStanding[]): Team[] { 
 
     // Group standings by group and get top 2 from each group
     const qualifiedTeams: Team[] = [];
@@ -139,141 +144,62 @@ export class KnockoutStageService {
 
   // Simulate a match in the knockout stage
   simulateMatch(match: KnockoutMatch): void {
-    match.scoreA = Math.floor(Math.random() * 5);
-    match.scoreB = Math.floor(Math.random() * 5);
-    match.played = true;
-    if (match.scoreA > match.scoreB) {
-      match.winner = match.teamA.name;
-    } else if (match.scoreB > match.scoreA) {
-      match.winner = match.teamB.name;
-    } else {
-      match.winner = 'Draw';
-      match.wentToPenalties = true;
-      this.simulatePenalties(match); // proceed to penalties
-    }
+    this.simulationService.simulateMatch(match);
+    
+    // Update tournament state after each match
+    this.updateTournamentState();
   }
 
-  // Simulate penalties for a match
-  simulatePenalties(match: KnockoutMatch) {
-    const penaltyScoreA = Math.floor(Math.random() * 5) + 1; // 1-5 penalties
-    const penaltyScoreB = Math.floor(Math.random() * 5) + 1; // 1-5 penalties
-    match.penaltyScoreA = penaltyScoreA;
-    match.penaltyScoreB = penaltyScoreB;
+  // Update tournament state with current knockout progress
+  private updateTournamentState(): void {
+    const allRoundOf16 = [...this.leftBracketRoundOf16, ...this.rightBracketRoundOf16];
+    const allQuarterFinals = [...this.leftBracketQuarterFinals, ...this.rightBracketQuarterFinals];
+    const allSemiFinals = [this.leftBracketSemiFinal, this.rightBracketSemiFinal].filter(match => match !== null) as KnockoutMatch[];
     
-    if (penaltyScoreA > penaltyScoreB) {
-      match.winner = match.teamA.name;
-    } else if (penaltyScoreB > penaltyScoreA) {
-      match.winner = match.teamB.name;
-    } else {
-      this.simulatePenalties(match); // Keep trying until there's a winner
-    }
+    this.tournamentState.updateKnockoutProgress(
+      allRoundOf16,
+      allQuarterFinals,
+      allSemiFinals,
+      this.finalMatch
+    );
   }
 
   // Advance winners from Round of 16 to Quarter Finals
   advanceToQuarterFinals(): void {
-    // Left bracket quarter finals
-    const leftR16Winners = this.leftBracketRoundOf16
-      .filter(match => match.played)
-      .map(match => this.getMatchWinner(match))
-      .filter(winner => winner !== null);
-
-    const rightR16Winners = this.rightBracketRoundOf16
-      .filter(match => match.played)
-      .map(match => this.getMatchWinner(match))
-      .filter(winner => winner !== null);
-
-    if (leftR16Winners.length === 4) {
-      this.leftBracketQuarterFinals = [
-        this.createMatch(leftR16Winners[0]!, leftR16Winners[1]!, 'quarter-finals'),
-        this.createMatch(leftR16Winners[2]!, leftR16Winners[3]!, 'quarter-finals')
-      ];
-    }
-
-    if (rightR16Winners.length === 4) {
-      this.rightBracketQuarterFinals = [
-        this.createMatch(rightR16Winners[0]!, rightR16Winners[1]!, 'quarter-finals'),
-        this.createMatch(rightR16Winners[2]!, rightR16Winners[3]!, 'quarter-finals')
-      ];
-    }
-  }
-
-  private getMatchWinner(match: KnockoutMatch): Team | null {
-    if (!match.played || !match.winner) return null;
-    return match.winner === match.teamA.name ? match.teamA : match.teamB;
-  }
-
-  private createMatch(teamA: Team, teamB: Team, round: 'round-of-16' | 'quarter-finals' | 'semi-finals' | 'final'): KnockoutMatch {
-    return {
-      teamA,
-      teamB,
-      scoreA: undefined,
-      scoreB: undefined,
-      penaltyScoreA: undefined,
-      penaltyScoreB: undefined,
-      wentToPenalties: false,
-      played: false,
-      round,
-      winner: ''
-    };
+    const quarterFinalMatches = this.simulationService.advanceToQuarterFinals(
+      this.leftBracketRoundOf16,
+      this.rightBracketRoundOf16
+    );
+    
+    this.leftBracketQuarterFinals = quarterFinalMatches.leftBracketQuarterFinals;
+    this.rightBracketQuarterFinals = quarterFinalMatches.rightBracketQuarterFinals;
+    
+    this.updateTournamentState();
   }
 
   // Advance winners from Quarter Finals to Semi Finals
   advanceToSemiFinals(): void {
-    const leftQuarterWinners = this.leftBracketQuarterFinals
-      .filter((match: KnockoutMatch) => match.played)
-      .map((match: KnockoutMatch) => this.getMatchWinner(match))
-      .filter((winner: Team | null) => winner !== null);
-
-    const rightQuarterWinners = this.rightBracketQuarterFinals
-      .filter((match: KnockoutMatch) => match.played)
-      .map((match: KnockoutMatch) => this.getMatchWinner(match))
-      .filter((winner: Team | null) => winner !== null);
-
-    if (leftQuarterWinners.length === 2) {
-      this.leftBracketSemiFinal = this.createMatch(leftQuarterWinners[0]!, leftQuarterWinners[1]!, 'semi-finals');
-    }
-
-    if (rightQuarterWinners.length === 2) {
-      this.rightBracketSemiFinal = this.createMatch(rightQuarterWinners[0]!, rightQuarterWinners[1]!, 'semi-finals');
-    }
+    const semiFinalMatches = this.simulationService.advanceToSemiFinals(
+      this.leftBracketQuarterFinals,
+      this.rightBracketQuarterFinals
+    );
+    
+    this.leftBracketSemiFinal = semiFinalMatches.leftBracketSemiFinal;
+    this.rightBracketSemiFinal = semiFinalMatches.rightBracketSemiFinal;
+    
+    this.updateTournamentState();
   } 
 
   // Advance winners from Semi Finals to Finals
   advanceToFinals(): void {
-    let leftSemiWinner: Team | null = null;
-    let rightSemiWinner: Team | null = null;
-
-    if (this.leftBracketSemiFinal && this.leftBracketSemiFinal.played) {
-      leftSemiWinner = this.getMatchWinner(this.leftBracketSemiFinal);
-    }
-
-    if (this.rightBracketSemiFinal && this.rightBracketSemiFinal.played) {
-      rightSemiWinner = this.getMatchWinner(this.rightBracketSemiFinal);
-    }
-
-    if (leftSemiWinner && rightSemiWinner) {
-      this.finalMatch = this.createMatch(leftSemiWinner, rightSemiWinner, 'final');
-    }
-  }
-
-  // Round completion checking methods
-  areAllRoundOf16MatchesPlayed(): boolean {
-    return this.leftBracketRoundOf16.every(match => match.played) && 
-           this.rightBracketRoundOf16.every(match => match.played);
-  }
-
-  areAllQuarterFinalMatchesPlayed(): boolean {
-    return this.leftBracketQuarterFinals.length > 0 &&
-           this.rightBracketQuarterFinals.length > 0 &&
-           this.leftBracketQuarterFinals.every(match => match.played) && 
-           this.rightBracketQuarterFinals.every(match => match.played);
-  }
-
-  areAllSemiFinalMatchesPlayed(): boolean {
-    return this.leftBracketSemiFinal !== null &&
-           this.rightBracketSemiFinal !== null &&
-           (this.leftBracketSemiFinal?.played || false) && 
-           (this.rightBracketSemiFinal?.played || false);
+    const finalMatch = this.simulationService.advanceToFinal(
+      this.leftBracketSemiFinal,
+      this.rightBracketSemiFinal
+    );
+    
+    this.finalMatch = finalMatch;
+    
+    this.updateTournamentState();
   }
 
   // Automatic advancement methods
@@ -306,29 +232,34 @@ export class KnockoutStageService {
 
   // Round completion status tracking for simulate all round matches buttons
   checkRoundCompletionStatus(): { roundOf16: boolean, quarterFinals: boolean, semiFinals: boolean, final: boolean } {
-    const roundOf16Complete = this.areAllRoundOf16MatchesPlayed();
-    const quarterFinalsComplete = this.areAllQuarterFinalMatchesPlayed();
-    const semiFinalsComplete = this.areAllSemiFinalMatchesPlayed();
-    const finalComplete = this.finalMatch?.played || false;
+    const status = this.simulationService.analyzeRoundCompletionStatus(
+      this.leftBracketRoundOf16,
+      this.rightBracketRoundOf16,
+      this.leftBracketQuarterFinals,
+      this.rightBracketQuarterFinals,
+      this.leftBracketSemiFinal,
+      this.rightBracketSemiFinal,
+      this.finalMatch
+    );
 
     // Auto-advance if rounds are completed but next round isn't set up
-    if (roundOf16Complete && this.leftBracketQuarterFinals.length === 0 && this.rightBracketQuarterFinals.length === 0) {
+    if (status.roundOf16Completed && this.leftBracketQuarterFinals.length === 0 && this.rightBracketQuarterFinals.length === 0) {
       this.checkAndAdvanceToQuarterFinals();
     }
     
-    if (quarterFinalsComplete && !this.leftBracketSemiFinal && !this.rightBracketSemiFinal) {
+    if (status.quarterFinalsCompleted && !this.leftBracketSemiFinal && !this.rightBracketSemiFinal) {
       this.checkAndAdvanceToSemiFinals();
     }
     
-    if (semiFinalsComplete && !this.finalMatch) {
+    if (status.semiFinalsCompleted && !this.finalMatch) {
       this.checkAndAdvanceToFinals();
     }
 
     return {
-      roundOf16: roundOf16Complete,
-      quarterFinals: quarterFinalsComplete,
-      semiFinals: semiFinalsComplete,
-      final: finalComplete
+      roundOf16: status.roundOf16Completed,
+      quarterFinals: status.quarterFinalsCompleted,
+      semiFinals: status.semiFinalsCompleted,
+      final: status.finalCompleted
     };
   }
 
@@ -350,7 +281,13 @@ export class KnockoutStageService {
     }
   } {
     const completionStatus = this.checkRoundCompletionStatus();
-    const updates: any = {};
+    const updates: {
+      roundOf16Simulated?: boolean,
+      quarterFinalsSimulated?: boolean,
+      semiFinalsSimulated?: boolean,
+      finalSimulated?: boolean,
+      allMatchesSimulated?: boolean
+    } = {};
     let shouldUpdateState = false;
 
     // Check Round of 16 completion
@@ -396,6 +333,66 @@ export class KnockoutStageService {
       shouldUpdateState,
       updates
     };
+  }
+
+  // Initialize knockout stage - called from component's ngOnInit
+  initializeKnockoutStage(): {
+    top16: Team[];
+    leftBracketRoundOf16: KnockoutMatch[];
+    rightBracketRoundOf16: KnockoutMatch[];
+    leftBracketQuarterFinals: KnockoutMatch[];
+    rightBracketQuarterFinals: KnockoutMatch[];
+    leftBracketSemiFinal: KnockoutMatch | null;
+    rightBracketSemiFinal: KnockoutMatch | null;
+    finalMatch: KnockoutMatch | null;
+    roundCompletionStatus: {
+      roundOf16Simulated: boolean;
+      quarterFinalsSimulated: boolean;
+      semiFinalsSimulated: boolean;
+      finalSimulated: boolean;
+      allMatchesSimulated: boolean;
+    }
+  } {
+    // Reset service state first to ensure clean initialization
+    this.resetKnockoutStage();
+
+    // Load top 16 teams
+    this.loadTop16Teams();
+
+    // Initialize knockout stage if we have enough teams
+    if (this.top16.length >= 16) {
+      // Draw the round of 16 matches using the loaded teams
+      this.drawRoundOf16Matches(this.top16);
+    } else {
+      console.error('Not enough teams loaded for knockout stage. Found:', this.top16.length);
+    }
+
+    // Return the initialized state
+    return {
+      top16: this.top16,
+      leftBracketRoundOf16: this.leftBracketRoundOf16,
+      rightBracketRoundOf16: this.rightBracketRoundOf16,
+      leftBracketQuarterFinals: this.leftBracketQuarterFinals,
+      rightBracketQuarterFinals: this.rightBracketQuarterFinals,
+      leftBracketSemiFinal: this.leftBracketSemiFinal,
+      rightBracketSemiFinal: this.rightBracketSemiFinal,
+      finalMatch: this.finalMatch,
+      roundCompletionStatus: {
+        roundOf16Simulated: false,
+        quarterFinalsSimulated: false,
+        semiFinalsSimulated: false,
+        finalSimulated: false,
+        allMatchesSimulated: false
+      }
+    };
+  }
+
+  // Cleanup method - called from component's ngOnDestroy
+  cleanupKnockoutStage(): void {
+    // Reset the knockout stage when leaving the page
+    this.resetKnockoutStage();
+    
+    console.log('Knockout stage service cleaned up');
   }
 
 }

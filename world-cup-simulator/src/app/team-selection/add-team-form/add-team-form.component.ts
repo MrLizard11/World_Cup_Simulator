@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Team } from '../models/team.model';
+import { Team } from '../../models/team.model';
 
 @Component({
   selector: 'app-add-team-form',
