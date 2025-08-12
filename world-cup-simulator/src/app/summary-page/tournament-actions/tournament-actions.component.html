@@ -8,17 +8,17 @@
       <div class="current-status" *ngIf="tournamentState">
         <h4>Current Tournament Progress:</h4>
         <ul>
-          <li [class.completed]="tournamentState.selectedTeams.length > 0">
-            ✓ Teams Selected: {{ tournamentState.selectedTeams.length }}/32
+          <li [class.completed]="(tournamentState?.selectedTeams?.length ?? 0) > 0">
+            ✓ Teams Selected: {{ tournamentState?.selectedTeams?.length ?? 0 }}/32
           </li>
-          <li [class.completed]="tournamentState.isGroupStageComplete">
-            {{ tournamentState.isGroupStageComplete ? '✓' : '○' }} Group Stage Complete
+          <li [class.completed]="tournamentState?.isGroupStageComplete">
+            {{ tournamentState?.isGroupStageComplete ? '✓' : '○' }} Group Stage Complete
           </li>
-          <li [class.completed]="tournamentState.isKnockoutStageComplete">
-            {{ tournamentState.isKnockoutStageComplete ? '✓' : '○' }} Knockout Stage Complete
+          <li [class.completed]="tournamentState?.isKnockoutStageComplete">
+            {{ tournamentState?.isKnockoutStageComplete ? '✓' : '○' }} Knockout Stage Complete
           </li>
-          <li [class.completed]="tournamentState.isTournamentComplete">
-            {{ tournamentState.isTournamentComplete ? '✓' : '○' }} Tournament Complete
+          <li [class.completed]="tournamentState?.isTournamentComplete">
+            {{ tournamentState?.isTournamentComplete ? '✓' : '○' }} Tournament Complete
           </li>
         </ul>
       </div>

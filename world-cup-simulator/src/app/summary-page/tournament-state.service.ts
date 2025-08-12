@@ -225,8 +225,14 @@ export class TournamentStateService {
 
   // Reset tournament
   resetTournament(): void {
-    this.updateState(this.initialState);
-    sessionStorage.removeItem('tournamentState');
+    try {
+      this.updateState(this.initialState);
+      sessionStorage.removeItem('tournamentState');
+    } catch (error) {
+      console.error('Error resetting tournament:', error);
+      // Force reset state even if storage fails
+      this.tournamentState$.next(this.initialState);
+    }
   }
 
   // Update state and save to storage
