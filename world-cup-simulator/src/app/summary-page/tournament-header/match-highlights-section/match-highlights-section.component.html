@@ -1,0 +1,17 @@
+<div class="highlights-section">
+  <h3>🌟 Match Highlights</h3>
+  <div class="highlights-grid">
+    <div *ngIf="tournamentStats.biggestWin.match" class="highlight-card">
+      <h4>🔥 Biggest Victory</h4>
+      <p class="highlight-match">{{ tournamentStats.biggestWin.match }}</p>
+      <p class="highlight-score">{{ tournamentStats.biggestWin.score }}</p>
+      <p class="highlight-detail">{{ tournamentStats.biggestWin.difference }} goal difference</p>
+    </div>
+    
+    <div *ngIf="tournamentStats.mostGoalsInMatch.match" class="highlight-card">
+      <h4>⚽ Goal Fest</h4>
+      <p class="highlight-match">{{ tournamentStats.mostGoalsInMatch.match }}</p>
+      <p class="highlight-detail">{{ tournamentStats.mostGoalsInMatch.goals }} total goals</p>
+    </div>
+  </div>
+</div>

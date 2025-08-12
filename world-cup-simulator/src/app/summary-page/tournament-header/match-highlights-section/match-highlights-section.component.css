@@ -1,0 +1,97 @@
+.highlights-section {
+  margin-bottom: 40px;
+}
+
+.highlights-section h3 {
+  text-align: center;
+  color: #FFD700;
+  font-size: 2rem;
+  margin-bottom: 30px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 25px;
+}
+
+.highlight-card {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 25px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.highlight-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.highlight-card h4 {
+  color: #FF6B6B;
+  font-size: 1.4rem;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.highlight-match {
+  color: white;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.highlight-score {
+  color: #4ECDC4;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+}
+
+.highlight-detail {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+  margin: 0;
+  text-align: center;
+  font-style: italic;
+}
+
+/* Different colors for different highlight cards */
+.highlight-card:first-child {
+  border-color: rgba(255, 107, 107, 0.4);
+  background: linear-gradient(135deg, rgba(255,107,107,0.1), rgba(255,255,255,0.1));
+}
+
+.highlight-card:first-child h4 {
+  color: #FF6B6B;
+}
+
+.highlight-card:last-child {
+  border-color: rgba(78, 205, 196, 0.4);
+  background: linear-gradient(135deg, rgba(78,205,196,0.1), rgba(255,255,255,0.1));
+}
+
+.highlight-card:last-child h4 {
+  color: #4ECDC4;
+}
+
+@media (max-width: 768px) {
+  .highlights-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .highlight-card {
+    padding: 20px;
+  }
+  
+  .highlights-section h3 {
+    font-size: 1.5rem;
+  }
+}

@@ -1,0 +1,20 @@
+<div class="journey-summary">
+  <div class="summary-stat">
+    <span class="stat-label">Total Goals Scored:</span>
+    <span class="stat-value">{{ championJourney.totalGoals }}</span>
+  </div>
+  <div class="summary-stat">
+    <span class="stat-label">Goals Conceded:</span>
+    <span class="stat-value">{{ championJourney.totalGoalsConceded }}</span>
+  </div>
+  <div class="summary-stat" *ngIf="championJourney.penaltyWins > 0">
+    <span class="stat-label">Penalty Shootout Wins:</span>
+    <span class="stat-value">{{ championJourney.penaltyWins }}</span>
+  </div>
+  <div class="summary-stat">
+    <span class="stat-label">Goal Difference:</span>
+    <span class="stat-value" [class.positive]="championJourney.totalGoals - championJourney.totalGoalsConceded > 0">
+      +{{ championJourney.totalGoals - championJourney.totalGoalsConceded }}
+    </span>
+  </div>
+</div>
