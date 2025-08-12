@@ -67,14 +67,18 @@ export class TeamSelectionComponent implements OnInit {
   }
 
   startTournament() {
-    if (this.teamSelectionService.canStartTournament()) {
-      const teams = this.teamSelectionService.prepareForTournament();
-      console.log('Starting tournament with teams:', teams);
-      // Teams are automatically stored in sessionStorage by the service
-      this.router.navigate(['/group-stage']);
-    } else {
-      const count = this.teamSelectionService.getSelectedTeamsCount();
-      alert(`Please select exactly 32 teams. Currently selected: ${count}`);
+    try {
+      if (this.teamSelectionService.canStartTournament()) {
+        const teams = this.teamSelectionService.prepareForTournament();
+        // Tournament starting - teams are automatically stored in sessionStorage by the service
+        this.router.navigate(['/group-stage']);
+      } else {
+        const count = this.teamSelectionService.getSelectedTeamsCount();
+        alert(`Please select exactly 32 teams. Currently selected: ${count}`);
+      }
+    } catch (error) {
+      console.error('Error starting tournament:', error);
+      alert('Failed to start tournament. Please try again.');
     }
   }
 }
