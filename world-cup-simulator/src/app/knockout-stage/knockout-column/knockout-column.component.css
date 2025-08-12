@@ -28,57 +28,6 @@
     left: 100px;
 }
 
-/* Bracket sections for left and right sides in R16 and QF */
-.bracket-section {
-    display: flex;
-    flex-direction: row;
-    gap: 15px;
-    margin: 0 20px;
-    position: relative;
-    align-items: center;
-}
-
-.bracket-section h3 {
-    text-align: center;
-    font-size: 0.9rem;
-    font-weight: bold;
-    color: #FFD700;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    margin-bottom: 10px;
-    padding: 6px 10px;
-    background: rgba(255,215,0,0.2);
-    border-radius: 15px;
-    border: 1px solid rgba(255,215,0,0.3);
-}
-
-.left-bracket {
-    border-bottom: 4px solid #FF6B6B;
-    border-left: none;
-}
-
-.right-bracket {
-    border-bottom: 4px solid #4ECDC4;
-    border-left: none;
-}
-
-/* Specific positioning for quarter finals and semi finals right brackets */
-.quarter-finals-column .right-bracket{
-    left: 200px;
-}
-
-.semi-finals-column .right-bracket {
-    left: 275px;
-}
-
-.semi-finals-column .left-bracket {
-    left: -75px;
-}
-
-/* Position final match card slightly to the right */
-.final-column .match-details {
-    margin-left: 90px;
-}
-
 /* Match containers for each round */
 .bracket-section .matches-container {
     display: flex;

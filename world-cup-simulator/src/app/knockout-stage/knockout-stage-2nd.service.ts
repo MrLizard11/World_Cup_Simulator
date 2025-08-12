@@ -11,30 +11,39 @@ export class KnockoutStage2ndService {
 
   // Simulate individual match logic
   simulateMatch(match: KnockoutMatch): void {
-    if (match.played) return; // Don't simulate already played matches
+    try {
+      if (match.played) return; // Don't simulate already played matches
 
-    // Simple random score generation (0-4 goals each team)
-    const scoreA = Math.floor(Math.random() * 5);
-    const scoreB = Math.floor(Math.random() * 5);
+      // Simple random score generation (0-4 goals each team)
+      const scoreA = Math.floor(Math.random() * 5);
+      const scoreB = Math.floor(Math.random() * 5);
 
-    match.scoreA = scoreA;
-    match.scoreB = scoreB;
+      match.scoreA = scoreA;
+      match.scoreB = scoreB;
 
-    // Determine winner - if tied, go to penalties
-    if (scoreA > scoreB) {
-      match.winner = match.teamA.name;
-    } else if (scoreB > scoreA) {
-      match.winner = match.teamB.name;
-    } else {
-      // Penalty shootout for tied matches
-      this.simulatePenalties(match);
-    }
+      // Determine winner - if tied, go to penalties
+      if (scoreA > scoreB) {
+        match.winner = match.teamA.name;
+      } else if (scoreB > scoreA) {
+        match.winner = match.teamB.name;
+      } else {
+        // Penalty shootout for tied matches
+        this.simulatePenalties(match);
+      }
 
-    match.played = true;
-    console.log(`Match simulated: ${match.teamA.name} ${match.scoreA} - ${match.scoreB} ${match.teamB.name}`);
-    
-    if (match.wentToPenalties) {
-      console.log(`Penalties: ${match.penaltyScoreA} - ${match.penaltyScoreB}`);
+      match.played = true;
+      
+      // Log penalty results if needed
+      if (match.wentToPenalties && match.penaltyScoreA !== undefined && match.penaltyScoreB !== undefined) {
+        // Penalties were required for this match
+      }
+    } catch (error) {
+      console.error(`Error simulating match between ${match.teamA.name} and ${match.teamB.name}:`, error);
+      // Reset match state on error
+      match.played = false;
+      match.scoreA = undefined;
+      match.scoreB = undefined;
+      match.winner = '';
     }
   }
 

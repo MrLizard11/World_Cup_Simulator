@@ -70,44 +70,58 @@ export class KnockoutStageService {
 
   // Get top 16 teams from group standings
    getTop16Teams(groupStandings: TeamStanding[]): Team[] { 
+    try {
+      // Group standings by group and get top 2 from each group
+      const qualifiedTeams: Team[] = [];
 
-    // Group standings by group and get top 2 from each group
-    const qualifiedTeams: Team[] = [];
-
-    // Get all group IDs (1-8)
-    const groupIds = [...new Set(groupStandings.map(standing => standing.groupId))];
-    console.log('Found group IDs:', groupIds);
-    
-    groupIds.forEach(groupId => {
-      // Get standings for this group, sorted by points, then goal difference, and then goals for
-      const groupTeams = groupStandings
-        .filter(standing => standing.groupId === groupId)
-        .sort((a, b) => {
-          if (b.points !== a.points) return b.points - a.points;
-          if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
-          return b.goalsFor - a.goalsFor;
-        });
+      // Get all group IDs (1-8)
+      const groupIds = [...new Set(groupStandings.map(standing => standing.groupId))];
       
-      console.log(`Group ${groupId} teams:`, groupTeams);
+      if (groupIds.length !== 8) {
+        throw new Error(`Expected 8 groups, found ${groupIds.length}`);
+      }
       
-      // Take top 2 teams from each group
-      const top2 = groupTeams.slice(0, 2);
-      qualifiedTeams.push(...top2.map(standing => standing.team));
-    });
-    this.top16 = qualifiedTeams;
-    return this.top16;
+      groupIds.forEach(groupId => {
+        // Get standings for this group, sorted by points, then goal difference, and then goals for
+        const groupTeams = groupStandings
+          .filter(standing => standing.groupId === groupId)
+          .sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+            return b.goalsFor - a.goalsFor;
+          });
+        
+        if (groupTeams.length < 2) {
+          throw new Error(`Group ${groupId} has insufficient teams: ${groupTeams.length}`);
+        }
+        
+        // Take top 2 teams from each group
+        const top2 = groupTeams.slice(0, 2);
+        qualifiedTeams.push(...top2.map(standing => standing.team));
+      });
+      
+      if (qualifiedTeams.length !== 16) {
+        throw new Error(`Expected 16 qualified teams, got ${qualifiedTeams.length}`);
+      }
+      
+      this.top16 = qualifiedTeams;
+      return this.top16;
+    } catch (error) {
+      console.error('Error getting top 16 teams:', error);
+      return [];
+    }
   }
 
   // Draw Round of 16 matches based on top 16 teams
   drawRoundOf16Matches(top16: Team[]): void {
-    if (top16.length < 16) {
-      console.error('Not enough teams to draw Round of 16 matches');
-      return;
-    }
+    try {
+      if (top16.length < 16) {
+        throw new Error(`Not enough teams to draw Round of 16 matches: ${top16.length}/16`);
+      }
 
-    // Clear previous matches
-    this.leftBracketRoundOf16 = [];
-    this.rightBracketRoundOf16 = [];
+      // Clear previous matches
+      this.leftBracketRoundOf16 = [];
+      this.rightBracketRoundOf16 = [];
     
     // Left bracket - first 8 teams (groups A,C,E,G winners + B,D,F,H runners-up)
     for (let i = 0; i < 4; i++) {
@@ -139,6 +153,12 @@ export class KnockoutStageService {
         round: 'round-of-16',
         winner: ''
       });
+    }
+    } catch (error) {
+      console.error('Error drawing Round of 16 matches:', error);
+      // Reset brackets on error
+      this.leftBracketRoundOf16 = [];
+      this.rightBracketRoundOf16 = [];
     }
   }
 
@@ -389,10 +409,13 @@ export class KnockoutStageService {
 
   // Cleanup method - called from component's ngOnDestroy
   cleanupKnockoutStage(): void {
-    // Reset the knockout stage when leaving the page
-    this.resetKnockoutStage();
-    
-    console.log('Knockout stage service cleaned up');
+    try {
+      // Reset the knockout stage when leaving the page
+      this.resetKnockoutStage();
+      // Knockout stage service cleaned up successfully
+    } catch (error) {
+      console.error('Error during knockout stage cleanup:', error);
+    }
   }
 
 }

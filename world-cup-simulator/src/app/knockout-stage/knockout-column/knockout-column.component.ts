@@ -19,4 +19,11 @@ export class KnockoutColumnComponent {
   onSimulateMatch(match: KnockoutMatch) {
     this.simulateMatch.emit(match);
   }
+
+  getRoundType(): 'round-of-16' | 'quarter-finals' | 'semi-finals' | 'final' {
+    if (this.columnClass.includes('round-of-16')) return 'round-of-16';
+    if (this.columnClass.includes('quarter-finals')) return 'quarter-finals';
+    if (this.columnClass.includes('semi-finals')) return 'semi-finals';
+    return 'final';
+  }
 }
