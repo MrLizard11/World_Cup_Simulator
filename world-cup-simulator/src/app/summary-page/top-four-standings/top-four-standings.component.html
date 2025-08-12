@@ -1,0 +1,42 @@
+<div class="top-four-standings">
+  <h2>Final Standings</h2>
+  <div class="podium">
+    <!-- 2nd Place -->
+    <div class="position-card second-place" *ngIf="topFour[1]">
+      <div class="position-number">2</div>
+      <div class="medal">🥈</div>
+      <div class="team-info">
+        <span class="team-flag">{{ topFour[1].countryCode }}</span>
+        <span class="team-name">{{ topFour[1].name }}</span>
+      </div>
+    </div>
+    
+    <!-- 1st Place (Champion) -->
+    <div class="position-card first-place" *ngIf="topFour[0]">
+      <div class="position-number">1</div>
+      <div class="medal">🥇</div>
+      <div class="team-info">
+        <span class="team-flag">{{ topFour[0].countryCode }}</span>
+        <span class="team-name">{{ topFour[0].name }}</span>
+      </div>
+    </div>
+    
+    <!-- 3rd Place -->
+    <div class="position-card third-place" *ngIf="topFour[2]">
+      <div class="position-number">3</div>
+      <div class="medal">🥉</div>
+      <div class="team-info">
+        <span class="team-flag">{{ topFour[2].countryCode }}</span>
+        <span class="team-name">{{ topFour[2].name }}</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 4th Place -->
+  <div class="fourth-place-section" *ngIf="topFour[3]">
+    <app-position-info 
+      [team]="topFour[3]" 
+      [position]="4">
+    </app-position-info>
+  </div>
+</div>
