@@ -1,0 +1,22 @@
+<div class="container">
+    <app-group-stage-buttons 
+        [showMatches]="showMatches"
+        [showGroupStandings]="showGroupStandings"
+        (simulateAllMatches)="runAllMatches()"
+        (toggleMatches)="onToggleMatches($event)"
+        (toggleStandings)="onToggleStandings($event)">
+    </app-group-stage-buttons>
+
+    <app-group-stage-matches 
+        [groups]="groups"
+        [showMatches]="showMatches"
+        (matchSimulated)="simulateMatch($event)">
+    </app-group-stage-matches>
+
+    <app-group-stage-standings 
+        [groups]="groups"
+        [groupStandings]="groupStandings"
+        [showGroupStandings]="showGroupStandings"
+        (goToNextStage)="goToNextStage()">
+    </app-group-stage-standings>
+</div>

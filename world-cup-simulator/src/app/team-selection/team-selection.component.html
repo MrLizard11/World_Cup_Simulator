@@ -1,5 +1,6 @@
 <div class="container">
     <div class="header">
+        <img src="assets/logo.png" alt="World Cup Simulator Logo" class="logo" width="100" height="100">
         <h2>Team Selection</h2>
     </div>
     <div class="team-count">
@@ -43,9 +44,10 @@
         <div class="start-button" *ngIf="selectedTeams.length > 0">
             <button 
                 (click)="startTournament()" 
-                class="btn-start"
-                [disabled]="selectedTeams.length !== 32">
-                Start Tournament
+                class="btn-start">
+                <a routerLink="/group-stage" routerLinkActive="active">
+                    Start Tournament
+                </a>
                 <span *ngIf="selectedTeams.length !== 32">
                     ({{ 32 - selectedTeams.length }} more teams needed)
                 </span>

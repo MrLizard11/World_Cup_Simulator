@@ -1,0 +1,91 @@
+h2 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    color: #fff;
+}
+
+.button-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.toggle-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+p {
+    cursor: pointer;
+    background: rgba(255,255,255,0.2);
+    padding: 10px 20px;
+    border-radius: 25px;
+    display: inline-block;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+p:hover {
+    background: rgba(255,255,255,0.3);
+    border-color: white;
+    transform: translateY(-2px);
+}
+
+button {
+    background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.show-matches-btn {
+    background: linear-gradient(45deg, #4ECDC4, #44A08D);
+}
+
+.group-standings-btn {
+    background: linear-gradient(45deg, #F093FB, #F5576C);
+}
+
+button.active {
+    background: linear-gradient(45deg, #FFD700, #FFA500) !important;
+    color: #333 !important;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    h2 {
+        font-size: 2rem;
+    }
+    
+    button {
+        width: 100%;
+        margin: 5px 0;
+    }
+}

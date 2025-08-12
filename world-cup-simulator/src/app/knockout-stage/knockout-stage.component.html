@@ -1,0 +1,71 @@
+<div class="container">
+    <div class="page-title">Knockout Stage</div>
+
+    <app-knockout-round-buttons
+        [allMatchesSimulated]="allMatchesSimulated"
+        [finalSimulated]="finalSimulated"
+        [semiFinalsSimulated]="semiFinalsSimulated"
+        [quarterFinalsSimulated]="quarterFinalsSimulated"
+        [roundOf16Simulated]="roundOf16Simulated"
+        [canSimulateAllMatches]="canSimulateAllMatches()"
+        [canSimulateFinal]="canSimulateFinal()"
+        [canSimulateSemiFinals]="canSimulateSemiFinals()"
+        [canSimulateQuarterFinals]="canSimulateQuarterFinals()"
+        [canSimulateRoundOf16]="canSimulateRoundOf16()"
+        [areAllSemiFinalMatchesPlayed]="areAllSemiFinalMatchesPlayed()"
+        [areAllQuarterFinalMatchesPlayed]="areAllQuarterFinalMatchesPlayed()"
+        [areAllRoundOf16MatchesPlayed]="areAllRoundOf16MatchesPlayed()"
+        (runAllMatches)="runAllMatches()"
+        (runFinal)="runFinal()"
+        (runSemiFinals)="runSemiFinals()"
+        (runQuarterFinals)="runQuarterFinals()"
+        (runAllRoundOf16)="runAllRoundOf16()">
+    </app-knockout-round-buttons>
+
+    <div class="tournament-bracket">
+        <app-winner-announcment [finalMatch]="finalMatch"></app-winner-announcment>
+
+        <!-- Bracket Tree Layout -->
+        <div class="bracket-tree">
+            <!-- Round of 16 Column -->
+            <app-knockout-column
+                [leftMatches]="leftBracketRoundOf16"
+                [rightMatches]="rightBracketRoundOf16"
+                [roundLabel]="'Round of 16'"
+                [columnClass]="'round-of-16-column'"
+                [showBothSides]="true"
+                (simulateMatch)="simulateMatch($event)">
+            </app-knockout-column>
+
+            <!-- Quarter Finals Column -->
+            <app-knockout-column
+                [leftMatches]="leftBracketQuarterFinals"
+                [rightMatches]="rightBracketQuarterFinals"
+                [roundLabel]="'Quarter Finals'"
+                [columnClass]="'quarter-finals-column'"
+                [showBothSides]="true"
+                (simulateMatch)="simulateMatch($event)">
+            </app-knockout-column>
+
+            <!-- Semi Finals Column -->
+            <app-knockout-column
+                [leftMatches]="leftBracketSemiFinal ? [leftBracketSemiFinal] : []"
+                [rightMatches]="rightBracketSemiFinal ? [rightBracketSemiFinal] : []"
+                [roundLabel]="'Semi Finals'"
+                [columnClass]="'semi-finals-column'"
+                [showBothSides]="true"
+                (simulateMatch)="simulateMatch($event)">
+            </app-knockout-column>
+
+            <!-- Final Column -->
+            <app-knockout-column
+                [leftMatches]="finalMatch ? [finalMatch] : []"
+                [rightMatches]="[]"
+                [roundLabel]="'Final'"
+                [columnClass]="'final-column'"
+                [showBothSides]="false"
+                (simulateMatch)="simulateMatch($event)">
+            </app-knockout-column>
+        </div>
+    </div>
+</div>

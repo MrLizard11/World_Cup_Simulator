@@ -1,0 +1,191 @@
+/* Round columns */
+.round-column {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+    max-width: 1000px;
+    margin: 15px 0;
+    position: relative;
+}
+
+.round-of-16-column {
+    order: 1;
+}
+
+.quarter-finals-column {
+    order: 2;
+}
+
+.semi-finals-column {
+    order: 3;
+}
+
+.final-column {
+    order: 4;
+    justify-content: center;
+    left: 100px;
+}
+
+/* Bracket sections for left and right sides in R16 and QF */
+.bracket-section {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    margin: 0 20px;
+    position: relative;
+    align-items: center;
+}
+
+.bracket-section h3 {
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #FFD700;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    margin-bottom: 10px;
+    padding: 6px 10px;
+    background: rgba(255,215,0,0.2);
+    border-radius: 15px;
+    border: 1px solid rgba(255,215,0,0.3);
+}
+
+.left-bracket {
+    border-bottom: 4px solid #FF6B6B;
+    border-left: none;
+}
+
+.right-bracket {
+    border-bottom: 4px solid #4ECDC4;
+    border-left: none;
+}
+
+/* Specific positioning for quarter finals and semi finals right brackets */
+.quarter-finals-column .right-bracket{
+    left: 200px;
+}
+
+.semi-finals-column .right-bracket {
+    left: 275px;
+}
+
+.semi-finals-column .left-bracket {
+    left: -75px;
+}
+
+/* Position final match card slightly to the right */
+.final-column .match-details {
+    margin-left: 90px;
+}
+
+/* Match containers for each round */
+.bracket-section .matches-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.match-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    min-height: 80px;
+    justify-content: center;
+    gap: 6px;
+    max-width: 140px;
+}
+
+.match-details:hover {
+    background: rgba(255,255,255,0.25);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    border-color: rgba(255,215,0,0.5);
+}
+
+.team {
+    font-weight: bold;
+    font-size: 0.8rem;
+    text-align: center;
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    padding: 3px 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 6px;
+    min-width: 80px;
+    border: 1px solid rgba(255,255,255,0.2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.team.winner {
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    color: #000;
+    font-weight: bold;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+    border: 2px solid #FFD700;
+    text-shadow: none;
+    animation: winnerGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes winnerGlow {
+    from {
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+    }
+    to {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.9);
+    }
+}
+
+.score {
+    font-size: 1.1rem;
+    font-weight: bold;
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    color: #333;
+    padding: 4px 8px;
+    border-radius: 8px;
+    text-align: center;
+    border: 2px solid rgba(255,215,0,0.3);
+    margin: 4px 0;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    min-width: 40px;
+}
+
+.simulate-btn {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    border-radius: 15px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    margin-top: 3px;
+    font-size: 0.7rem;
+}
+
+.simulate-btn:hover {
+    background: linear-gradient(45deg, #218838, #1ea98c);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.played-indicator {
+    color: #28a745;
+    font-weight: bold;
+    padding: 6px 12px;
+    background: rgba(40, 167, 69, 0.2);
+    border-radius: 15px;
+    border: 2px solid #28a745;
+    margin-top: 3px;
+    font-size: 0.7rem;
+}

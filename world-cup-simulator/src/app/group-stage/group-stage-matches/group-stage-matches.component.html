@@ -1,0 +1,14 @@
+<div *ngIf="showMatches" class="matches-section">
+    <div class="group-container" *ngFor="let group of groups">
+        <h3>Group {{ group.name }}</h3>
+        <div class="group-matches">
+            <div class="match-details" *ngFor="let match of group.matches">
+                <span class="team">{{ match.teamA.name }}</span>
+                <span class="score">{{ match.scoreA }} - {{ match.scoreB }}</span>
+                <span class="team">{{ match.teamB.name }}</span>
+                <button class="simulate-btn" *ngIf="!match.played" (click)="onSimulateMatch(match)">Simulate Match</button>
+                <span class="played-indicator" *ngIf="match.played">✓ Played</span>
+            </div>
+        </div>
+    </div>
+</div>

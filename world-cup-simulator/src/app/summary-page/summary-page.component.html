@@ -1,0 +1,66 @@
+<div class="summary-container">
+  <!-- Show no data message when tournament is not complete -->
+  <div *ngIf="!isDataAvailable" class="no-data-message">
+    <div class="message-card">
+      <h2>🏆 Tournament Summary</h2>
+      <div *ngIf="!tournamentState || !tournamentState.isTournamentComplete">
+        <p>Complete the tournament to see the summary!</p>
+        <p>The summary will show once the final match has been played.</p>
+        <div class="current-status" *ngIf="tournamentState">
+          <h4>Current Tournament Progress:</h4>
+          <ul>
+            <li [class.completed]="tournamentState.selectedTeams.length > 0">
+              ✓ Teams Selected: {{ tournamentState.selectedTeams.length }}/32
+            </li>
+            <li [class.completed]="tournamentState.isGroupStageComplete">
+              {{ tournamentState.isGroupStageComplete ? '✓' : '○' }} Group Stage Complete
+            </li>
+            <li [class.completed]="tournamentState.isKnockoutStageComplete">
+              {{ tournamentState.isKnockoutStageComplete ? '✓' : '○' }} Knockout Stage Complete
+            </li>
+            <li [class.completed]="tournamentState.isTournamentComplete">
+              {{ tournamentState.isTournamentComplete ? '✓' : '○' }} Tournament Complete
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div *ngIf="!tournamentState">
+        <p>No tournament data found.</p>
+        <p>Please start a new tournament from the team selection page.</p>
+      </div>
+      <div class="navigation-buttons">
+        <button class="nav-btn" (click)="goToGroupStage()">Group Stage</button>
+        <button class="nav-btn" (click)="goToKnockouts()">Knockout Stage</button>
+        <button class="nav-btn primary" (click)="restartTournament()">Start New Tournament</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tournament Summary Content -->
+  <div *ngIf="isDataAvailable" class="tournament-summary">
+    
+    <!-- Tournament Header (Champion, Final Match, Top 4) -->
+    <app-tournament-header
+      [champion]="champion"
+      [runnerUp]="runnerUp"
+      [semiFinalTeams]="semiFinalTeams"
+      [finalMatch]="finalMatch"
+      [topPerformers]="topPerformers">
+    </app-tournament-header>
+
+    <!-- Tournament Statistics, Highlights, Champion Journey -->
+    <app-tournament-stats
+      [tournamentStats]="tournamentStats"
+      [championJourney]="championJourney"
+      [champion]="champion">
+    </app-tournament-stats>
+
+    <!-- Action Buttons at the bottom -->
+    <div class="action-buttons">
+      <button class="action-btn restart-btn" (click)="restartTournament()">
+        🔄 New Tournament
+      </button>
+    </div>
+
+  </div>
+</div>

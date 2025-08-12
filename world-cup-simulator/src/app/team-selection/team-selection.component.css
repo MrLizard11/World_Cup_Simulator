@@ -21,7 +21,7 @@
 
 .team-count {
   font-size: 1.2rem;
-  color: #6c757d;
+  color: #1de2c8;
 }
 
 .team-selection {
@@ -67,10 +67,6 @@
 }
 
 .custom-team {
-  background: linear-gradient(135deg, #587b9e, #b32626);
-  padding: 1.5rem;
-  border-radius: 8px;
-  border: 1px solid #b8daff;
   text-align: center;
 }
 
@@ -129,7 +125,7 @@
 }
 
 .selected-teams h3 {
-  color: #333;
+  color: #1de2c8;
   margin-bottom: 1rem;
   font-size: 1.5rem;
 }
@@ -142,8 +138,8 @@
 }
 
 .team-card {
-  background: white;
-  border: 2px solid #dee2e6;
+  background: rgb(100, 97, 97);
+  border: 3px solid #0505ff;
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -158,13 +154,13 @@
 
 .team-info h4 {
   margin: 0 0 0.5rem 0;
-  color: #007bff;
+  color: #ffffff;
   font-size: 1.2rem;
 }
 
 .team-info p {
   margin: 0.25rem 0;
-  color: #495057;
+  color: #ffffff;
   font-size: 0.9rem;
 }
 
