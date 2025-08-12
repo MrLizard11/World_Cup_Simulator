@@ -26,27 +26,37 @@ export class GroupStageComponent implements OnInit, OnDestroy {
     private teamSelectionService: TeamSelectionService,
     private knockoutStageService: KnockoutStageService,
     private tournamentState: TournamentStateService
-  ) {
-    // Initialize from session storage using service
-    const { selectedTeams, shouldRedirect } = this.matchesService.initializeFromSessionStorage();
-    
-    if (shouldRedirect || selectedTeams.length === 0) {
-      this.router.navigate(['/team-selection']);
-    } else {
-      this.selectedTeams = selectedTeams;
-      this.initializeGroupStage();
-    }
-  }
+  ) {}
 
   ngOnInit(): void {
     // Scroll to top when component initializes
     window.scrollTo(0, 0);
+    try {
+      // Initialize from session storage using service
+      const { selectedTeams, shouldRedirect } = this.matchesService.initializeFromSessionStorage();
+      
+      if (shouldRedirect || selectedTeams.length === 0) {
+        this.router.navigate(['/team-selection']);
+      } else {
+        this.selectedTeams = selectedTeams;
+        this.initializeGroupStage();
+      }
+    } catch (error) {
+      console.error('Error initializing group stage:', error);
+      this.router.navigate(['/team-selection']);
+    }
   }
 
   initializeGroupStage() {
-    const { groups, groupStandings } = this.matchesService.initializeGroupStageData(this.selectedTeams);
-    this.groups = groups;
-    this.groupStandings = groupStandings;
+    try {
+      const { groups, groupStandings } = this.matchesService.initializeGroupStageData(this.selectedTeams);
+      this.groups = groups;
+      this.groupStandings = groupStandings;
+    } catch (error) {
+      console.error('Error initializing group stage data:', error);
+      // Navigate back to team selection on critical error
+      this.router.navigate(['/team-selection']);
+    }
   }
 
 
@@ -65,7 +75,12 @@ export class GroupStageComponent implements OnInit, OnDestroy {
   }
 
   runAllMatches() {
-    this.matchesService.runAllMatchesInGroups(this.groups, this.groupStandings);
+    try {
+      this.matchesService.runAllMatchesInGroups(this.groups, this.groupStandings);
+    } catch (error) {
+      console.error('Error running all matches:', error);
+      alert('Failed to simulate all matches. Please try individual match simulation.');
+    }
   }
 
   canProceedToNextStage() {

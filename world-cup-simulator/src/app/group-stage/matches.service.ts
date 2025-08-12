@@ -17,51 +17,63 @@ export class MatchesService {
   constructor(private tournamentState: TournamentStateService) { }
 
   resetGroupStage(): void {
-    // Reset match simulation data but preserve team data for navigation
-    this.groupStandings = [];
-    // this.top16 = []; // Don't reset - will be regenerated when needed
-    this.roundOf16Matches = undefined;
-    console.log('Group stage match data reset (team data preserved)');
+    try {
+      // Reset match simulation data but preserve team data for navigation
+      this.groupStandings = [];
+      // this.top16 = []; // Don't reset - will be regenerated when needed
+      this.roundOf16Matches = undefined;
+      // Group stage match data reset successfully (team data preserved)
+    } catch (error) {
+      console.error('Error resetting group stage:', error);
+    }
   }
 
   // Complete reset for starting a new tournament
   completeReset(): void {
-    this.groupStandings = [];
-    this.top16 = [];
-    this.roundOf16Matches = undefined;
-    
-    // Clear session storage
-    sessionStorage.removeItem('selectedTeams');
-    sessionStorage.removeItem('top16Teams');
-    console.log('Complete group stage reset including teams');
+    try {
+      this.groupStandings = [];
+      this.top16 = [];
+      this.roundOf16Matches = undefined;
+      
+      // Clear session storage
+      sessionStorage.removeItem('selectedTeams');
+      sessionStorage.removeItem('top16Teams');
+      // Complete group stage reset including teams - successful
+    } catch (error) {
+      console.error('Error during complete reset:', error);
+    }
   }
 
   generateGroupMatches(selectedTeams: Team[]): Group[] {
-    if (selectedTeams.length !== 32) {
-      console.error('Expected 32 teams for World Cup format');
+    try {
+      if (selectedTeams.length !== 32) {
+        throw new Error(`Expected 32 teams for World Cup format, received ${selectedTeams.length}`);
+      }
+
+      const groups: Group[] = [];
+      const groupNames = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+      // Shuffle the teams randomly before dividing into groups
+      const shuffledTeams = this.shuffleArray([...selectedTeams]);
+
+      // Divide shuffled teams into 8 groups of 4 teams each
+      for (let i = 0; i < 8; i++) {
+        const groupTeams = shuffledTeams.slice(i * 4, (i + 1) * 4);
+        const matches = this.generateMatchesForGroup(groupTeams, i + 1);
+
+        groups.push({
+          id: i + 1,
+          name: groupNames[i],
+          teams: groupTeams,
+          matches: matches
+        });
+      }
+
+      return groups;
+    } catch (error) {
+      console.error('Error generating group matches:', error);
       return [];
     }
-
-    const groups: Group[] = [];
-    const groupNames = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-
-    // Shuffle the teams randomly before dividing into groups
-    const shuffledTeams = this.shuffleArray([...selectedTeams]);
-
-    // Divide shuffled teams into 8 groups of 4 teams each
-    for (let i = 0; i < 8; i++) {
-      const groupTeams = shuffledTeams.slice(i * 4, (i + 1) * 4);
-      const matches = this.generateMatchesForGroup(groupTeams, i + 1);
-
-      groups.push({
-        id: i + 1,
-        name: groupNames[i],
-        teams: groupTeams,
-        matches: matches
-      });
-    }
-
-    return groups;
   }
 
   private shuffleArray<T>(array: T[]): T[] {
@@ -189,27 +201,42 @@ export class MatchesService {
   }
 
   simulateMatchInPlace(match: Match, groupStandings: TeamStanding[]) {
-    // Simulate the match with random scores
-    match.scoreA = Math.floor(Math.random() * 5);
-    match.scoreB = Math.floor(Math.random() * 5);
-    match.played = true;
+    try {
+      // Simulate the match with random scores
+      match.scoreA = Math.floor(Math.random() * 5);
+      match.scoreB = Math.floor(Math.random() * 5);
+      match.played = true;
 
-    // Update standings
-    this.updateStandingsAfterMatch(match, groupStandings);
+      // Update standings
+      this.updateStandingsAfterMatch(match, groupStandings);
 
-    console.log(`Match simulated: ${match.teamA.name} ${match.scoreA} - ${match.scoreB} ${match.teamB.name}`);
+      // Match simulated successfully
+    } catch (error) {
+      console.error(`Error simulating match between ${match.teamA.name} and ${match.teamB.name}:`, error);
+      // Reset match state on error
+      match.played = false;
+      match.scoreA = 0;
+      match.scoreB = 0;
+    }
   }
 
   runAllMatchesInGroups(groups: Group[], groupStandings: TeamStanding[]) {
-    // Simulate all matches in all groups
-    groups.forEach(group => {
-      group.matches.forEach(match => {
-        if (!match.played) {
-          this.simulateMatchInPlace(match, groupStandings);
-        }
+    try {
+      let simulatedCount = 0;
+      // Simulate all matches in all groups
+      groups.forEach(group => {
+        group.matches.forEach(match => {
+          if (!match.played) {
+            this.simulateMatchInPlace(match, groupStandings);
+            simulatedCount++;
+          }
+        });
       });
-    });
-    console.log('All matches simulated!');
+      // All matches simulated successfully
+    } catch (error) {
+      console.error('Error simulating group matches:', error);
+      throw new Error('Failed to complete group stage simulation');
+    }
   }
 
   canProceedToNextStage(groups: Group[]): boolean {

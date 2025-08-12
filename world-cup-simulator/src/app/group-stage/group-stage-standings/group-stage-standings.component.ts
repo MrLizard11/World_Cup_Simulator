@@ -1,5 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, Input } from '@angular/core';
 import { Group, TeamStanding } from '../../models/group.model';
 
 @Component({
@@ -13,10 +12,6 @@ export class GroupStageStandingsComponent {
   @Input() groupStandings: TeamStanding[] = [];
   @Input() showGroupStandings: boolean = false;
 
-  @Output() goToNextStage = new EventEmitter<void>();
-
-  constructor(private router: Router) {}
-
   getStandingsForGroup(groupId: number): TeamStanding[] {
     return this.groupStandings
       .filter(standing => standing.groupId === groupId)
@@ -26,9 +21,5 @@ export class GroupStageStandingsComponent {
         if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
         return b.goalsFor - a.goalsFor;
       });
-  }
-
-  onGoToNextStage(): void {
-    this.goToNextStage.emit();
   }
 }
