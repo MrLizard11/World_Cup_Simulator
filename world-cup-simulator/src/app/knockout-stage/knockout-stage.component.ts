@@ -14,6 +14,7 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
   roundOf16Simulated: boolean = false;
   quarterFinalsSimulated: boolean = false;
   semiFinalsSimulated: boolean = false;
+  thirdPlaceSimulated: boolean = false;
   finalSimulated: boolean = false;
   allMatchesSimulated: boolean = false;
 
@@ -46,6 +47,10 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
 
   get rightBracketSemiFinal(): KnockoutMatch | null {
     return this.knockoutStageService.rightBracketSemiFinal;
+  }
+
+  get thirdPlaceMatch(): KnockoutMatch | null {
+    return this.knockoutStageService.thirdPlaceMatch;
   }
 
   get finalMatch(): KnockoutMatch | null {
@@ -161,8 +166,22 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
     }
   }
 
+  runThirdPlace() {
+    if (this.thirdPlaceSimulated || !this.areAllSemiFinalMatchesPlayed()) return;
+
+    try {
+      if (this.thirdPlaceMatch && !this.thirdPlaceMatch.played) {
+        this.simulateMatch(this.thirdPlaceMatch);
+      }
+      this.thirdPlaceSimulated = true;
+    } catch (error) {
+      console.error('Error running Third Place match:', error);
+      this.thirdPlaceSimulated = false;
+    }
+  }
+
   runFinal() {
-    if (this.finalSimulated || !this.areAllSemiFinalMatchesPlayed()) return;
+    if (this.finalSimulated || !this.areAllSemiFinalMatchesPlayed() || !this.thirdPlaceSimulated) return;
 
     try {
       if (this.finalMatch && !this.finalMatch.played) {
@@ -212,7 +231,13 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
       }
       this.knockoutStageService.checkAndAdvanceToFinals();
 
-      if (this.finalMatch && !this.finalMatch.played) {
+      // Simulate third place match
+      if (this.thirdPlaceMatch && !this.thirdPlaceMatch.played) {
+        this.simulateMatch(this.thirdPlaceMatch);
+      }
+
+      // Only simulate final after third place is complete
+      if (this.finalMatch && !this.finalMatch.played && this.thirdPlaceMatch?.played) {
         this.simulateMatch(this.finalMatch);
       }
 
@@ -221,6 +246,7 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
       this.roundOf16Simulated = true;
       this.quarterFinalsSimulated = true;
       this.semiFinalsSimulated = true;
+      this.thirdPlaceSimulated = true;
       this.finalSimulated = true;
     } catch (error) {
       console.error('Error running all knockout matches:', error);
@@ -257,7 +283,11 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
   }
 
   canSimulateFinal(): boolean {
-    return this.areAllSemiFinalMatchesPlayed() && !this.finalSimulated;
+    return this.areAllSemiFinalMatchesPlayed() && this.thirdPlaceSimulated && !this.finalSimulated;
+  }
+
+  canSimulateThirdPlace(): boolean {
+    return this.areAllSemiFinalMatchesPlayed() && !this.thirdPlaceSimulated;
   }
 
   canSimulateAllMatches(): boolean {
@@ -285,6 +315,10 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
       this.rightBracketSemiFinal !== null &&
       (this.leftBracketSemiFinal?.played || false) &&
       (this.rightBracketSemiFinal?.played || false);
+  }
+
+  isThirdPlaceMatchPlayed(): boolean {
+    return this.thirdPlaceMatch?.played || false;
   }
 
   private updateRoundCompletionFromService(): void { 

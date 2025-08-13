@@ -19,6 +19,7 @@ export class KnockoutStageService {
   rightBracketQuarterFinals: KnockoutMatch[] = [];
   leftBracketSemiFinal: KnockoutMatch | null = null;
   rightBracketSemiFinal: KnockoutMatch | null = null;
+  thirdPlaceMatch: KnockoutMatch | null = null;
   finalMatch: KnockoutMatch | null = null;
 
   constructor(
@@ -35,6 +36,7 @@ export class KnockoutStageService {
     this.rightBracketQuarterFinals = [];
     this.leftBracketSemiFinal = null;
     this.rightBracketSemiFinal = null;
+    this.thirdPlaceMatch = null;
     this.finalMatch = null;
   }
 
@@ -47,6 +49,7 @@ export class KnockoutStageService {
     this.rightBracketQuarterFinals = [];
     this.leftBracketSemiFinal = null;
     this.rightBracketSemiFinal = null;
+    this.thirdPlaceMatch = null;
     this.finalMatch = null;
     
     // Clear session storage
@@ -180,6 +183,7 @@ export class KnockoutStageService {
       allRoundOf16,
       allQuarterFinals,
       allSemiFinals,
+      this.thirdPlaceMatch,
       this.finalMatch
     );
   }
@@ -210,14 +214,20 @@ export class KnockoutStageService {
     this.updateTournamentState();
   } 
 
-  // Advance winners from Semi Finals to Finals
+  // Advance winners from Semi Finals to Finals and create 3rd place match
   advanceToFinals(): void {
     const finalMatch = this.simulationService.advanceToFinal(
       this.leftBracketSemiFinal,
       this.rightBracketSemiFinal
     );
     
+    const thirdPlaceMatch = this.simulationService.createThirdPlaceMatch(
+      this.leftBracketSemiFinal,
+      this.rightBracketSemiFinal
+    );
+    
     this.finalMatch = finalMatch;
+    this.thirdPlaceMatch = thirdPlaceMatch;
     
     this.updateTournamentState();
   }

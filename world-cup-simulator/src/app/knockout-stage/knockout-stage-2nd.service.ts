@@ -59,7 +59,7 @@ export class KnockoutStage2ndService {
     match.penaltyScoreB = penaltyScoreB;
     
     // Ensure someone wins in penalties
-    if (penaltyScoreA >= penaltyScoreB) {
+    if (penaltyScoreA > penaltyScoreB) {
       match.winner = match.teamA.name;
     } else if (penaltyScoreB > penaltyScoreA) {
       match.winner = match.teamB.name;
@@ -81,7 +81,7 @@ export class KnockoutStage2ndService {
   }
 
   // Create match from two teams
-  createMatch(teamA: Team, teamB: Team, round: 'round-of-16' | 'quarter-finals' | 'semi-finals' | 'final'): KnockoutMatch {
+  createMatch(teamA: Team, teamB: Team, round: 'round-of-16' | 'quarter-finals' | 'semi-finals' | 'final' | 'third-place'): KnockoutMatch {
     return {
       teamA,
       teamB,
@@ -157,6 +157,18 @@ export class KnockoutStage2ndService {
     const rightWinner = rightSemiFinal.winner === rightSemiFinal.teamA.name ? rightSemiFinal.teamA : rightSemiFinal.teamB;
 
     return this.createMatch(leftWinner, rightWinner, 'final');
+  }
+
+  // Create third place match from semifinal losers
+  createThirdPlaceMatch(leftSemiFinal: KnockoutMatch | null, rightSemiFinal: KnockoutMatch | null): KnockoutMatch | null {
+    if (!leftSemiFinal || !rightSemiFinal || !leftSemiFinal.played || !rightSemiFinal.played) {
+      return null;
+    }
+
+    const leftLoser = leftSemiFinal.winner === leftSemiFinal.teamA.name ? leftSemiFinal.teamB : leftSemiFinal.teamA;
+    const rightLoser = rightSemiFinal.winner === rightSemiFinal.teamA.name ? rightSemiFinal.teamB : rightSemiFinal.teamA;
+
+    return this.createMatch(leftLoser, rightLoser, 'third-place');
   }
 
   // Check round completion status

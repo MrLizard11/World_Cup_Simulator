@@ -226,8 +226,13 @@
     order: 3;
 }
 
-.final-column {
+.third-place-column {
     order: 4;
+    justify-content: center;
+}
+
+.final-column {
+    order: 5;
     justify-content: center;
 }
 
@@ -304,7 +309,11 @@
 }
 
 .semi-finals-column::before {
-    content: '🥉 SEMI-FINALS';
+    content: '⚡ SEMI-FINALS';
+}
+
+.third-place-column::before {
+    content: '🥉 3RD PLACE';
 }
 
 .final-column::before {
