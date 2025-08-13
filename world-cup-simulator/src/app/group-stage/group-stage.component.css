@@ -334,3 +334,32 @@ button.active {
         font-size: 1.3rem;
     }
 }
+
+/* Go to Next Stage Button Styles */
+.go-to-next-stage {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.go-to-next-stage button {
+    background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.go-to-next-stage button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.go-to-next-stage a {
+    text-decoration: none;
+    color: inherit;
+}

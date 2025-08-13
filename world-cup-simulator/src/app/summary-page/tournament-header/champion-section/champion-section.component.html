@@ -1,0 +1,19 @@
+<div class="champion-section">
+  <div class="trophy-container">
+    <div class="trophy">🏆</div>
+    <h1 class="tournament-title">World Cup Champion</h1>
+  </div>
+  
+  <div *ngIf="champion" class="champion-card">
+    <div class="team-flag">
+      {{ champion.countryCode }}
+    </div>
+    <div class="champion-info">
+      <h2 class="champion-name">{{ champion.name }}</h2>
+      <p class="champion-country">{{ champion.country }}</p>
+      <div class="champion-stats">
+        <span class="elo-rating">ELO: {{ champion.elo }}</span>
+      </div>
+    </div>
+  </div>
+</div>

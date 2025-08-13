@@ -1,107 +1,18 @@
 <!-- Tournament Statistics -->
-<div class="stats-section">
-  <h3>📊 Tournament Statistics</h3>
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-icon">⚽</div>
-      <div class="stat-info">
-        <h4>{{ tournamentStats.totalGoals }}</h4>
-        <p>Total Goals</p>
-      </div>
-    </div>
-    
-    <div class="stat-card">
-      <div class="stat-icon">📈</div>
-      <div class="stat-info">
-        <h4>{{ tournamentStats.averageGoalsPerMatch }}</h4>
-        <p>Goals per Match</p>
-      </div>
-    </div>
-    
-    <div class="stat-card">
-      <div class="stat-icon">🎯</div>
-      <div class="stat-info">
-        <h4>{{ tournamentStats.biggestWin.difference }}</h4>
-        <p>Biggest Win Margin</p>
-      </div>
-    </div>
-    
-    <div class="stat-card">
-      <div class="stat-icon">🥅</div>
-      <div class="stat-info">
-        <h4>{{ tournamentStats.penaltyShootouts }}</h4>
-        <p>Penalty Shootouts</p>
-      </div>
-    </div>
-  </div>
-</div>
+<app-tournament-statistics-grid [tournamentStats]="tournamentStats"></app-tournament-statistics-grid>
 
 <!-- Match Highlights -->
-<div class="highlights-section">
-  <h3>🌟 Match Highlights</h3>
-  <div class="highlights-grid">
-    <div *ngIf="tournamentStats.biggestWin.match" class="highlight-card">
-      <h4>🔥 Biggest Victory</h4>
-      <p class="highlight-match">{{ tournamentStats.biggestWin.match }}</p>
-      <p class="highlight-score">{{ tournamentStats.biggestWin.score }}</p>
-      <p class="highlight-detail">{{ tournamentStats.biggestWin.difference }} goal difference</p>
-    </div>
-    
-    <div *ngIf="tournamentStats.mostGoalsInMatch.match" class="highlight-card">
-      <h4>⚽ Goal Fest</h4>
-      <p class="highlight-match">{{ tournamentStats.mostGoalsInMatch.match }}</p>
-      <p class="highlight-detail">{{ tournamentStats.mostGoalsInMatch.goals }} total goals</p>
-    </div>
-  </div>
-</div>
+<app-match-highlights-section [tournamentStats]="tournamentStats"></app-match-highlights-section>
 
 <!-- Champion's Journey -->
 <div *ngIf="champion && championJourney" class="champions-journey">
-  <h3>👑 Champion's Journey</h3>
+  <app-champions-journey-header [champion]="champion"></app-champions-journey-header>
+  
   <div class="journey-card">
-    <h4>{{ champion.name }}'s Path to Glory</h4>
-    
     <!-- Journey Matches -->
-    <div class="journey-matches">
-      <div *ngFor="let match of championJourney.matches; let i = index" class="journey-match">
-        <div class="match-round">
-          <span class="round-name">{{ match.round }}</span>
-        </div>
-        <div class="match-details">
-          <div class="opponent-info">
-            <span class="vs-label">vs</span>
-            <span class="opponent-name">{{ match.opponent.name }}</span>
-            <span class="opponent-flag">{{ match.opponent.countryCode }}</span>
-          </div>
-          <div class="match-score">
-            <span class="score">{{ match.score }}</span>
-            <span *ngIf="match.result === 'penalties'" class="penalty-indicator">🥅</span>
-          </div>
-        </div>
-        <div *ngIf="i < championJourney.matches.length - 1" class="journey-connector">↓</div>
-      </div>
-    </div>
+    <app-journey-matches-timeline [championJourney]="championJourney"></app-journey-matches-timeline>
     
     <!-- Journey Summary Stats -->
-    <div class="journey-summary">
-      <div class="summary-stat">
-        <span class="stat-label">Total Goals Scored:</span>
-        <span class="stat-value">{{ championJourney.totalGoals }}</span>
-      </div>
-      <div class="summary-stat">
-        <span class="stat-label">Goals Conceded:</span>
-        <span class="stat-value">{{ championJourney.totalGoalsConceded }}</span>
-      </div>
-      <div class="summary-stat" *ngIf="championJourney.penaltyWins > 0">
-        <span class="stat-label">Penalty Shootout Wins:</span>
-        <span class="stat-value">{{ championJourney.penaltyWins }}</span>
-      </div>
-      <div class="summary-stat">
-        <span class="stat-label">Goal Difference:</span>
-        <span class="stat-value" [class.positive]="championJourney.totalGoals - championJourney.totalGoalsConceded > 0">
-          +{{ championJourney.totalGoals - championJourney.totalGoalsConceded }}
-        </span>
-      </div>
-    </div>
+    <app-journey-summary-stats [championJourney]="championJourney"></app-journey-summary-stats>
   </div>
 </div>

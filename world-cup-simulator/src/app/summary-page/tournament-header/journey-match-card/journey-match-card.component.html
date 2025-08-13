@@ -1,0 +1,17 @@
+<div class="journey-match" [class.last-match]="isLast">
+  <div class="match-round">
+    <span class="round-name">{{ match.round }}</span>
+  </div>
+  <div class="match-details">
+    <div class="opponent-info">
+      <span class="vs-label">vs</span>
+      <span class="opponent-name">{{ match.opponent.name }}</span>
+      <span class="opponent-flag">{{ match.opponent.countryCode }}</span>
+    </div>
+    <div class="match-score">
+      <span class="score">{{ match.score }}</span>
+      <span *ngIf="match.result === 'penalties'" class="penalty-indicator">🥅</span>
+    </div>
+  </div>
+  <div *ngIf="!isLast" class="journey-connector">↓</div>
+</div>

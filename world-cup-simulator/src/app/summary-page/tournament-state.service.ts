@@ -22,6 +22,7 @@ export interface TournamentState {
   roundOf16Matches: KnockoutMatch[];
   quarterFinalMatches: KnockoutMatch[];
   semiFinalMatches: KnockoutMatch[];
+  thirdPlaceMatch: KnockoutMatch | null;
   finalMatch: KnockoutMatch | null;
   
   // Tournament Results
@@ -56,6 +57,7 @@ export class TournamentStateService {
     roundOf16Matches: [],
     quarterFinalMatches: [],
     semiFinalMatches: [],
+    thirdPlaceMatch: null,
     finalMatch: null,
     champion: null,
     runnerUp: null,
@@ -109,12 +111,13 @@ export class TournamentStateService {
     roundOf16: KnockoutMatch[],
     quarterFinals: KnockoutMatch[],
     semiFinals: KnockoutMatch[],
+    thirdPlace: KnockoutMatch | null,
     final: KnockoutMatch | null
   ): void {
     const currentState = this.getCurrentState();
     
-    // Check if tournament is complete
-    const isTournamentComplete = final?.played ?? false;
+    // Check if tournament is complete - both final and third place match must be played
+    const isTournamentComplete = (final?.played ?? false) && (thirdPlace?.played ?? false);
     let champion: Team | null = null;
     let runnerUp: Team | null = null;
     let semiFinalTeams: Team[] = [];
@@ -129,10 +132,18 @@ export class TournamentStateService {
         runnerUp = final.teamA;
       }
 
-      // Get all semifinal teams
-      semiFinalTeams = [
-        ...semiFinals.flatMap(match => [match.teamA, match.teamB])
-      ];
+      // Determine semifinal teams (3rd and 4th place)
+      if (thirdPlace && thirdPlace.played) {
+        // If third place match was played, order by result
+        const thirdPlaceWinner = thirdPlace.winner === thirdPlace.teamA.name ? thirdPlace.teamA : thirdPlace.teamB;
+        const fourthPlace = thirdPlace.winner === thirdPlace.teamA.name ? thirdPlace.teamB : thirdPlace.teamA;
+        semiFinalTeams = [thirdPlaceWinner, fourthPlace];
+      } else {
+        // If no third place match, get all semifinal participants
+        semiFinalTeams = [
+          ...semiFinals.flatMap(match => [match.teamA, match.teamB])
+        ];
+      }
     }
 
     this.updateState({
@@ -140,8 +151,9 @@ export class TournamentStateService {
       roundOf16Matches: roundOf16,
       quarterFinalMatches: quarterFinals,
       semiFinalMatches: semiFinals,
+      thirdPlaceMatch: thirdPlace,
       finalMatch: final,
-      isKnockoutStageComplete: this.areAllKnockoutMatchesComplete(roundOf16, quarterFinals, semiFinals, final),
+      isKnockoutStageComplete: this.areAllKnockoutMatchesComplete(roundOf16, quarterFinals, semiFinals, thirdPlace, final),
       isTournamentComplete,
       champion,
       runnerUp,
@@ -213,20 +225,28 @@ export class TournamentStateService {
     roundOf16: KnockoutMatch[],
     quarterFinals: KnockoutMatch[],
     semiFinals: KnockoutMatch[],
+    thirdPlace: KnockoutMatch | null,
     final: KnockoutMatch | null
   ): boolean {
     const allRoundOf16Complete = roundOf16.every(match => match.played);
     const allQuarterFinalsComplete = quarterFinals.every(match => match.played);
     const allSemiFinalsComplete = semiFinals.every(match => match.played);
+    const thirdPlaceComplete = thirdPlace?.played ?? false; // Third place match must be played
     const finalComplete = final?.played ?? false;
 
-    return allRoundOf16Complete && allQuarterFinalsComplete && allSemiFinalsComplete && finalComplete;
+    return allRoundOf16Complete && allQuarterFinalsComplete && allSemiFinalsComplete && thirdPlaceComplete && finalComplete;
   }
 
   // Reset tournament
   resetTournament(): void {
-    this.updateState(this.initialState);
-    sessionStorage.removeItem('tournamentState');
+    try {
+      this.updateState(this.initialState);
+      sessionStorage.removeItem('tournamentState');
+    } catch (error) {
+      console.error('Error resetting tournament:', error);
+      // Force reset state even if storage fails
+      this.tournamentState$.next(this.initialState);
+    }
   }
 
   // Update state and save to storage

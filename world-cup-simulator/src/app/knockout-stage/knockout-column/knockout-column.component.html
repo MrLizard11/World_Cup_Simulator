@@ -1,40 +1,28 @@
 <div class="round-column" [class]="columnClass">
     <!-- Left bracket section -->
-    <div class="bracket-section left-bracket" *ngIf="showBothSides && leftMatches.length > 0">
-        <app-match-details 
-            *ngFor="let match of leftMatches"
-            [match]="match"
-            [showSimulateButton]="true"
-            [buttonText]="'Simulate'"
-            [size]="'medium'"
-            [layout]="'vertical'"
-            (simulateMatch)="onSimulateMatch($event)">
-        </app-match-details>
-    </div>
+    <app-bracket-section 
+        *ngIf="showBothSides && leftMatches.length > 0"
+        [matches]="leftMatches"
+        [side]="'left'"
+        [round]="getRoundType()"
+        (simulateMatch)="onSimulateMatch($event)">
+    </app-bracket-section>
     
     <!-- Right bracket section -->
-    <div class="bracket-section right-bracket" *ngIf="showBothSides && rightMatches.length > 0">
-        <app-match-details 
-            *ngFor="let match of rightMatches"
-            [match]="match"
-            [showSimulateButton]="true"
-            [buttonText]="'Simulate'"
-            [size]="'medium'"
-            [layout]="'vertical'"
-            (simulateMatch)="onSimulateMatch($event)">
-        </app-match-details>
-    </div>
+    <app-bracket-section 
+        *ngIf="showBothSides && rightMatches.length > 0"
+        [matches]="rightMatches"
+        [side]="'right'"
+        [round]="getRoundType()"
+        (simulateMatch)="onSimulateMatch($event)">
+    </app-bracket-section>
     
     <!-- Single match (for finals) - only show one set of matches -->
-    <div *ngIf="!showBothSides && leftMatches.length > 0" style="margin: 0 auto;">
-        <app-match-details 
-            *ngFor="let match of leftMatches"
-            [match]="match"
-            [showSimulateButton]="true"
-            [buttonText]="'Simulate'"
-            [size]="'medium'"
-            [layout]="'vertical'"
-            (simulateMatch)="onSimulateMatch($event)">
-        </app-match-details>
-    </div>
+    <app-bracket-section 
+        *ngIf="!showBothSides && leftMatches.length > 0"
+        [matches]="leftMatches"
+        [side]="'center'"
+        [round]="'final'"
+        (simulateMatch)="onSimulateMatch($event)">
+    </app-bracket-section>
 </div>

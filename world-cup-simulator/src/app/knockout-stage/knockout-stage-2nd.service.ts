@@ -11,30 +11,39 @@ export class KnockoutStage2ndService {
 
   // Simulate individual match logic
   simulateMatch(match: KnockoutMatch): void {
-    if (match.played) return; // Don't simulate already played matches
+    try {
+      if (match.played) return; // Don't simulate already played matches
 
-    // Simple random score generation (0-4 goals each team)
-    const scoreA = Math.floor(Math.random() * 5);
-    const scoreB = Math.floor(Math.random() * 5);
+      // Simple random score generation (0-4 goals each team)
+      const scoreA = Math.floor(Math.random() * 5);
+      const scoreB = Math.floor(Math.random() * 5);
 
-    match.scoreA = scoreA;
-    match.scoreB = scoreB;
+      match.scoreA = scoreA;
+      match.scoreB = scoreB;
 
-    // Determine winner - if tied, go to penalties
-    if (scoreA > scoreB) {
-      match.winner = match.teamA.name;
-    } else if (scoreB > scoreA) {
-      match.winner = match.teamB.name;
-    } else {
-      // Penalty shootout for tied matches
-      this.simulatePenalties(match);
-    }
+      // Determine winner - if tied, go to penalties
+      if (scoreA > scoreB) {
+        match.winner = match.teamA.name;
+      } else if (scoreB > scoreA) {
+        match.winner = match.teamB.name;
+      } else {
+        // Penalty shootout for tied matches
+        this.simulatePenalties(match);
+      }
 
-    match.played = true;
-    console.log(`Match simulated: ${match.teamA.name} ${match.scoreA} - ${match.scoreB} ${match.teamB.name}`);
-    
-    if (match.wentToPenalties) {
-      console.log(`Penalties: ${match.penaltyScoreA} - ${match.penaltyScoreB}`);
+      match.played = true;
+      
+      // Log penalty results if needed
+      if (match.wentToPenalties && match.penaltyScoreA !== undefined && match.penaltyScoreB !== undefined) {
+        // Penalties were required for this match
+      }
+    } catch (error) {
+      console.error(`Error simulating match between ${match.teamA.name} and ${match.teamB.name}:`, error);
+      // Reset match state on error
+      match.played = false;
+      match.scoreA = undefined;
+      match.scoreB = undefined;
+      match.winner = '';
     }
   }
 
@@ -50,7 +59,7 @@ export class KnockoutStage2ndService {
     match.penaltyScoreB = penaltyScoreB;
     
     // Ensure someone wins in penalties
-    if (penaltyScoreA >= penaltyScoreB) {
+    if (penaltyScoreA > penaltyScoreB) {
       match.winner = match.teamA.name;
     } else if (penaltyScoreB > penaltyScoreA) {
       match.winner = match.teamB.name;
@@ -72,7 +81,7 @@ export class KnockoutStage2ndService {
   }
 
   // Create match from two teams
-  createMatch(teamA: Team, teamB: Team, round: 'round-of-16' | 'quarter-finals' | 'semi-finals' | 'final'): KnockoutMatch {
+  createMatch(teamA: Team, teamB: Team, round: 'round-of-16' | 'quarter-finals' | 'semi-finals' | 'final' | 'third-place'): KnockoutMatch {
     return {
       teamA,
       teamB,
@@ -148,6 +157,18 @@ export class KnockoutStage2ndService {
     const rightWinner = rightSemiFinal.winner === rightSemiFinal.teamA.name ? rightSemiFinal.teamA : rightSemiFinal.teamB;
 
     return this.createMatch(leftWinner, rightWinner, 'final');
+  }
+
+  // Create third place match from semifinal losers
+  createThirdPlaceMatch(leftSemiFinal: KnockoutMatch | null, rightSemiFinal: KnockoutMatch | null): KnockoutMatch | null {
+    if (!leftSemiFinal || !rightSemiFinal || !leftSemiFinal.played || !rightSemiFinal.played) {
+      return null;
+    }
+
+    const leftLoser = leftSemiFinal.winner === leftSemiFinal.teamA.name ? leftSemiFinal.teamB : leftSemiFinal.teamA;
+    const rightLoser = rightSemiFinal.winner === rightSemiFinal.teamA.name ? rightSemiFinal.teamB : rightSemiFinal.teamA;
+
+    return this.createMatch(leftLoser, rightLoser, 'third-place');
   }
 
   // Check round completion status

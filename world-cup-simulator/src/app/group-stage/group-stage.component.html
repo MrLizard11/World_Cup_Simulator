@@ -16,7 +16,11 @@
     <app-group-stage-standings 
         [groups]="groups"
         [groupStandings]="groupStandings"
-        [showGroupStandings]="showGroupStandings"
-        (goToNextStage)="goToNextStage()">
+        [showGroupStandings]="showGroupStandings">
     </app-group-stage-standings>
+
+    <!-- Go to Next Stage Button -->
+    <div class="go-to-next-stage" *ngIf="showGroupStandings || canProceedToNextStage()">
+        <button><a routerLink="/knockout-stage" routerLinkActive="active" (click)="goToNextStage()">Go to Knockout Stage</a></button>
+    </div>
 </div>

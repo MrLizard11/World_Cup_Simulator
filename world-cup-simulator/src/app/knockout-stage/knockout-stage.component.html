@@ -4,19 +4,23 @@
     <app-knockout-round-buttons
         [allMatchesSimulated]="allMatchesSimulated"
         [finalSimulated]="finalSimulated"
+        [thirdPlaceSimulated]="thirdPlaceSimulated"
         [semiFinalsSimulated]="semiFinalsSimulated"
         [quarterFinalsSimulated]="quarterFinalsSimulated"
         [roundOf16Simulated]="roundOf16Simulated"
         [canSimulateAllMatches]="canSimulateAllMatches()"
         [canSimulateFinal]="canSimulateFinal()"
+        [canSimulateThirdPlace]="canSimulateThirdPlace()"
         [canSimulateSemiFinals]="canSimulateSemiFinals()"
         [canSimulateQuarterFinals]="canSimulateQuarterFinals()"
         [canSimulateRoundOf16]="canSimulateRoundOf16()"
         [areAllSemiFinalMatchesPlayed]="areAllSemiFinalMatchesPlayed()"
         [areAllQuarterFinalMatchesPlayed]="areAllQuarterFinalMatchesPlayed()"
         [areAllRoundOf16MatchesPlayed]="areAllRoundOf16MatchesPlayed()"
+        [isThirdPlaceMatchPlayed]="isThirdPlaceMatchPlayed()"
         (runAllMatches)="runAllMatches()"
         (runFinal)="runFinal()"
+        (runThirdPlace)="runThirdPlace()"
         (runSemiFinals)="runSemiFinals()"
         (runQuarterFinals)="runQuarterFinals()"
         (runAllRoundOf16)="runAllRoundOf16()">
@@ -54,6 +58,16 @@
                 [roundLabel]="'Semi Finals'"
                 [columnClass]="'semi-finals-column'"
                 [showBothSides]="true"
+                (simulateMatch)="simulateMatch($event)">
+            </app-knockout-column>
+
+            <!-- Third Place Column -->
+            <app-knockout-column
+                [leftMatches]="thirdPlaceMatch ? [thirdPlaceMatch] : []"
+                [rightMatches]="[]"
+                [roundLabel]="'3rd Place'"
+                [columnClass]="'third-place-column'"
+                [showBothSides]="false"
                 (simulateMatch)="simulateMatch($event)">
             </app-knockout-column>
 

@@ -1,16 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { Team } from '../../models';
 import { KnockoutMatch } from '../../models/knockouts.model';
-
-interface TeamPerformance {
-  team: Team;
-  finalPosition: string;
-  matchesPlayed: number;
-  goalsScored: number;
-  goalsConceded: number;
-  goalDifference: number;
-  path: string[];
-}
+import { TeamPerformance } from '../../models/tournament-stats';
 
 @Component({
   selector: 'app-tournament-header',
@@ -31,4 +22,25 @@ export class TournamentHeaderComponent {
     runnerUp: null,
     semifinalists: []
   };
+
+  getTopFourTeams(): Team[] {
+    const topFour: Team[] = [];
+    
+    if (this.champion) {
+      topFour.push(this.champion);
+    }
+    
+    if (this.runnerUp) {
+      topFour.push(this.runnerUp);
+    }
+    
+    // Add semifinal teams (3rd and 4th place)
+    this.semiFinalTeams.forEach(team => {
+      if (topFour.length < 4) {
+        topFour.push(team);
+      }
+    });
+    
+    return topFour;
+  }
 }

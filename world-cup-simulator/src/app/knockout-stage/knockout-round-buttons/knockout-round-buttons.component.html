@@ -9,13 +9,19 @@
             (click)="onRunFinal()" 
             [disabled]="!canSimulateFinal"
             [class.completed]="finalSimulated">
-        {{ finalSimulated ? 'Final Simulated' : (!areAllSemiFinalMatchesPlayed ? 'Complete Semi-Finals First' : 'Simulate Final') }}
+        {{ finalSimulated ? 'Final Simulated' : (!areAllSemiFinalMatchesPlayed ? 'Complete Semi-Finals First' : (!isThirdPlaceMatchPlayed ? 'Play 3rd Place Match First' : 'Simulate Final')) }}
     </button>
     <button class="simulate-round-button" 
             (click)="onRunSemiFinals()" 
             [disabled]="!canSimulateSemiFinals"
             [class.completed]="semiFinalsSimulated">
         {{ semiFinalsSimulated ? 'Semi-Finals Simulated' : (!areAllQuarterFinalMatchesPlayed ? 'Complete Quarter-Finals First' : 'Simulate Semi-Finals') }}
+    </button>
+    <button class="simulate-round-button" 
+            (click)="onRunThirdPlace()" 
+            [disabled]="!canSimulateThirdPlace"
+            [class.completed]="thirdPlaceSimulated">
+        {{ thirdPlaceSimulated ? '3rd Place Simulated' : (!areAllSemiFinalMatchesPlayed ? 'Complete Semi-Finals First' : 'Simulate 3rd Place') }}
     </button>
     <button class="simulate-round-button" 
             (click)="onRunQuarterFinals()" 

@@ -1,6 +1,5 @@
-<!-- Tournament Complete Check -->
-<div *ngIf="!isDataAvailable" class="no-data-message">
-  <div class="message-card">
+<div class="progress-summary">
+  <div class="progress-card">
     <h2>🏆 Tournament Summary</h2>
     <div *ngIf="!tournamentState || !tournamentState.isTournamentComplete">
       <p>Complete the tournament to see the summary!</p>
@@ -27,17 +26,5 @@
       <p>No tournament data found.</p>
       <p>Please start a new tournament from the team selection page.</p>
     </div>
-    <div class="navigation-buttons">
-      <button class="nav-btn" (click)="onGoToGroupStage()">Group Stage</button>
-      <button class="nav-btn" (click)="onGoToKnockouts()">Knockout Stage</button>
-      <button class="nav-btn primary" (click)="onRestartTournament()">Start New Tournament</button>
-    </div>
   </div>
-</div>
-
-<!-- Action Buttons (when tournament is complete) -->
-<div *ngIf="isDataAvailable" class="action-buttons">
-  <button class="action-btn restart-btn" (click)="onRestartTournament()">
-    🔄 New Tournament
-  </button>
 </div>

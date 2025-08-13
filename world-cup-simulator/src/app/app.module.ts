@@ -18,7 +18,21 @@ import { GroupStageMatchesComponent } from './group-stage/group-stage-matches/gr
 import { GroupStageStandingsComponent } from './group-stage/group-stage-standings/group-stage-standings.component';
 import { TournamentHeaderComponent } from './summary-page/tournament-header/tournament-header.component';
 import { TournamentStatsComponent } from './summary-page/tournament-stats/tournament-stats.component';
-import { TournamentActionsComponent } from './summary-page/tournament-actions/tournament-actions.component';
+import { BracketSectionComponent } from './knockout-stage/bracket-section/bracket-section.component';
+import { TournamentProgressComponent } from './summary-page/tournament-progress/tournament-progress.component';
+import { NavigationButtonsComponent } from './summary-page/actions/navigation-buttons/navigation-buttons.component';
+import { ChampionSectionComponent } from './summary-page/tournament-header/champion-section/champion-section.component';
+import { FinalMatchResultsComponent } from './summary-page/tournament-header/final-match-results/final-match-results.component';
+import { TopFourStandingsComponent } from './summary-page/tournament-header/standings/top-four-standings/top-four-standings.component';
+import { PositionInfoComponent } from './summary-page/tournament-header/standings/position-info/position-info.component';
+import { TournamentStatisticsGridComponent } from './summary-page/tournament-header/tournament-statistics-grid/tournament-statistics-grid.component';
+import { MatchHighlightsSectionComponent } from './summary-page/tournament-header/match-highlights-section/match-highlights-section.component';
+import { ChampionsJourneyHeaderComponent } from './summary-page/tournament-header/champions-journey-header/champions-journey-header.component';
+import { JourneyMatchesTimelineComponent } from './summary-page/tournament-header/journey-matches-timeline/journey-matches-timeline.component';
+import { JourneySummaryStatsComponent } from './summary-page/tournament-header/journey-summary-stats/journey-summary-stats.component';
+import { JourneyMatchCardComponent } from './summary-page/tournament-header/journey-match-card/journey-match-card.component';
+import { PodiumPositionComponent } from './summary-page/tournament-header/standings/podium-position/podium-position.component';
+import { StatCardComponent } from './summary-page/shared/stat-card/stat-card.component';
 
 
 @NgModule({
@@ -38,7 +52,21 @@ import { TournamentActionsComponent } from './summary-page/tournament-actions/to
     GroupStageStandingsComponent,
     TournamentHeaderComponent,
     TournamentStatsComponent,
-    TournamentActionsComponent,
+    BracketSectionComponent,
+    TournamentProgressComponent,
+    NavigationButtonsComponent,
+    ChampionSectionComponent,
+    FinalMatchResultsComponent,
+    TopFourStandingsComponent,
+    PositionInfoComponent,
+    TournamentStatisticsGridComponent,
+    MatchHighlightsSectionComponent,
+    ChampionsJourneyHeaderComponent,
+    JourneyMatchesTimelineComponent,
+    JourneySummaryStatsComponent,
+    JourneyMatchCardComponent,
+    PodiumPositionComponent,
+    StatCardComponent,
   ],
   imports: [
     BrowserModule,

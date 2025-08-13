@@ -22,61 +22,15 @@
     order: 3;
 }
 
-.final-column {
+.third-place-column {
     order: 4;
     justify-content: center;
+}
+
+.final-column {
+    order: 5;
+    justify-content: center;
     left: 100px;
-}
-
-/* Bracket sections for left and right sides in R16 and QF */
-.bracket-section {
-    display: flex;
-    flex-direction: row;
-    gap: 15px;
-    margin: 0 20px;
-    position: relative;
-    align-items: center;
-}
-
-.bracket-section h3 {
-    text-align: center;
-    font-size: 0.9rem;
-    font-weight: bold;
-    color: #FFD700;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    margin-bottom: 10px;
-    padding: 6px 10px;
-    background: rgba(255,215,0,0.2);
-    border-radius: 15px;
-    border: 1px solid rgba(255,215,0,0.3);
-}
-
-.left-bracket {
-    border-bottom: 4px solid #FF6B6B;
-    border-left: none;
-}
-
-.right-bracket {
-    border-bottom: 4px solid #4ECDC4;
-    border-left: none;
-}
-
-/* Specific positioning for quarter finals and semi finals right brackets */
-.quarter-finals-column .right-bracket{
-    left: 200px;
-}
-
-.semi-finals-column .right-bracket {
-    left: 275px;
-}
-
-.semi-finals-column .left-bracket {
-    left: -75px;
-}
-
-/* Position final match card slightly to the right */
-.final-column .match-details {
-    margin-left: 90px;
 }
 
 /* Match containers for each round */
@@ -188,4 +142,43 @@
     border: 2px solid #28a745;
     margin-top: 3px;
     font-size: 0.7rem;
+}
+
+/* Round headers */
+.round-column::before {
+    content: '';
+    position: absolute;
+    bottom: -50px;
+    left: calc(50% + 30px);
+    transform: translateX(-50%);
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #FFD700;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    background: rgba(255,255,255,0.1);
+    padding: 10px 20px;
+    border-radius: 25px;
+    border: 2px solid rgba(255,215,0,0.3);
+    backdrop-filter: blur(10px);
+    white-space: nowrap;
+}
+
+.round-of-16-column::before {
+    content: '🎯 ROUND OF 16';
+}
+
+.quarter-finals-column::before {
+    content: '⚽ QUARTER-FINALS';
+}
+
+.semi-finals-column::before {
+    content: '⚡ SEMI-FINALS';
+}
+
+.third-place-column::before {
+    content: '🥉 3RD PLACE';
+}
+
+.final-column::before {
+    content: '🏆 FINAL';
 }

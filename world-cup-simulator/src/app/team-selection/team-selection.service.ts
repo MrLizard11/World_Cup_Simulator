@@ -14,7 +14,7 @@ export class TeamSelectionService {
     if (storedTeams) {
       try {
         this.selectedTeams = JSON.parse(storedTeams);
-        console.log('Loaded teams from sessionStorage in service:', this.selectedTeams.length);
+        // Successful load - removed debug log
       } catch (error) {
         console.error('Error parsing stored teams in service:', error);
         this.initializeSelectedTeams();
@@ -36,7 +36,12 @@ export class TeamSelectionService {
   }
 
   private updateSessionStorage(): void {
-    sessionStorage.setItem('selectedTeams', JSON.stringify(this.selectedTeams));
+    try {
+      sessionStorage.setItem('selectedTeams', JSON.stringify(this.selectedTeams));
+    } catch (error) {
+      console.error('Failed to save teams to sessionStorage:', error);
+      // Could implement fallback storage or user notification here
+    }
   }
 
   // Public methods for component to use
@@ -115,7 +120,11 @@ export class TeamSelectionService {
   }
 
   clearSessionStorage(): void {
-    sessionStorage.removeItem('selectedTeams');
+    try {
+      sessionStorage.removeItem('selectedTeams');
+    } catch (error) {
+      console.error('Failed to clear teams from sessionStorage:', error);
+    }
   }
 
   resetToDefault(): void {

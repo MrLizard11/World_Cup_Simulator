@@ -1,30 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { Team } from '../../models';
-
-interface TournamentStats {
-  totalGoals: number;
-  averageGoalsPerMatch: number;
-  biggestWin: { match: string; score: string; difference: number };
-  penaltyShootouts: number;
-  mostGoalsInMatch: { match: string; goals: number };
-}
-
-interface ChampionJourneyMatch {
-  round: string;
-  opponent: Team;
-  score: string;
-  result: 'win' | 'penalties';
-  goalsFor: number;
-  goalsAgainst: number;
-}
-
-interface ChampionJourney {
-  team: Team;
-  matches: ChampionJourneyMatch[];
-  totalGoals: number;
-  totalGoalsConceded: number;
-  penaltyWins: number;
-}
+import { TournamentStats, ChampionJourneyMatch, ChampionJourney } from '../../models/tournament-stats';
 
 @Component({
   selector: 'app-tournament-stats',
