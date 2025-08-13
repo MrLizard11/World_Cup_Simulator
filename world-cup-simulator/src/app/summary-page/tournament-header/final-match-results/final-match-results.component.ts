@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { KnockoutMatch } from '../../models/knockouts.model';
+import { KnockoutMatch } from '../../../models/knockouts.model';
 
 @Component({
   selector: 'app-final-match-results',

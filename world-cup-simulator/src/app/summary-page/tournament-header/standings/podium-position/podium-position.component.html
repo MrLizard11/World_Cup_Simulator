@@ -1,0 +1,8 @@
+<div class="position-card" [ngClass]="getPositionClass()" *ngIf="team">
+  <div class="position-number">{{ position }}</div>
+  <div class="medal">{{ getMedal() }}</div>
+  <div class="team-info">
+    <span class="team-flag">{{ team.countryCode }}</span>
+    <span class="team-name">{{ team.name }}</span>
+  </div>
+</div>

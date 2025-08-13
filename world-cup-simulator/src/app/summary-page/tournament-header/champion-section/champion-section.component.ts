@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Team } from '../../models';
+import { Team } from '../../../models';
 
 @Component({
   selector: 'app-champion-section',
