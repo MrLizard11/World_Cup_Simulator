@@ -6,6 +6,7 @@ import { MatchesService } from './matches.service';
 import { TeamSelectionService } from '../team-selection/team-selection.service';
 import { KnockoutStageService } from '../knockout-stage/knockout-stage.service';
 import { TournamentStateService } from '../summary-page/tournament-state.service';
+import { SimulationMode, SimulationModeService } from '../shared/services/simulation-mode.service';
 
 @Component({
   selector: 'app-group-stage',
@@ -25,7 +26,8 @@ export class GroupStageComponent implements OnInit, OnDestroy {
     private matchesService: MatchesService,
     private teamSelectionService: TeamSelectionService,
     private knockoutStageService: KnockoutStageService,
-    private tournamentState: TournamentStateService
+    private tournamentState: TournamentStateService,
+    private simulationModeService: SimulationModeService
   ) {}
 
   ngOnInit(): void {
@@ -72,6 +74,11 @@ export class GroupStageComponent implements OnInit, OnDestroy {
 
   simulateMatch(match: Match) {
     this.matchesService.simulateMatchInPlace(match, this.groupStandings);
+  }
+
+  onSimulationModeChanged(mode: SimulationMode): void {
+    this.simulationModeService.setSimulationMode(mode);
+    console.log('Simulation mode updated to:', mode);
   }
 
   runAllMatches() {
