@@ -1,0 +1,150 @@
+.mode-section {
+  margin-bottom: 25px;
+  background: linear-gradient(135deg, #2c3e50, #34495e);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.mode-section:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  transform: translateY(-2px);
+}
+
+.mode-details {
+  padding: 20px;
+}
+
+.mode-header {
+  padding: 15px 20px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.mode-header.active {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(76, 175, 80, 0.1));
+  border-bottom-color: rgba(76, 175, 80, 0.4);
+}
+
+.mode-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.mode-icon {
+  font-size: 1.5rem;
+}
+
+.mode-title strong {
+  font-size: 1.1rem;
+  color: #ffffff;
+}
+
+.current-badge {
+  background: #4CAF50;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.mode-tagline {
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.mode-details {
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.description p {
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+.technical-info h4,
+.example-section h4,
+.pros-cons h4 {
+  color: #ffffff;
+  font-size: 1rem;
+  margin-bottom: 10px;
+  margin-top: 20px;
+}
+
+.technical-info h4:first-child,
+.example-section h4:first-child {
+  margin-top: 0;
+}
+
+.technical-info ul,
+.pros ul,
+.cons ul {
+  padding-left: 20px;
+}
+
+.technical-info li,
+.pros li,
+.cons li {
+  margin-bottom: 5px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.example-match {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.teams {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.team-name {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.vs {
+  margin: 0 15px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.probability,
+.typical-score {
+  text-align: center;
+  margin-bottom: 5px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.pros-cons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.pros,
+.cons {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 768px) {
+  .pros-cons {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+}

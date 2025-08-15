@@ -1,0 +1,10 @@
+.description {
+  margin-bottom: 20px;
+}
+
+.description p {
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+  margin: 0;
+  font-size: 0.95rem;
+}
