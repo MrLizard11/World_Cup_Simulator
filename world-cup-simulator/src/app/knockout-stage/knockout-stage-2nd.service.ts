@@ -1,30 +1,42 @@
 import { Injectable } from '@angular/core';
 import { Team } from '../models';
 import { KnockoutMatch } from '../models/knockouts.model';
+import { SimulationModeService } from '../shared/services/simulation-mode.service';
+import { EloUpdateService } from '../shared/services/elo-update.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class KnockoutStage2ndService {
 
-  constructor() { }
+  constructor(
+    private simulationModeService: SimulationModeService,
+    private eloUpdateService: EloUpdateService
+  ) { }
 
   // Simulate individual match logic
   simulateMatch(match: KnockoutMatch): void {
     try {
       if (match.played) return; // Don't simulate already played matches
 
-      // Simple random score generation (0-4 goals each team)
-      const scoreA = Math.floor(Math.random() * 5);
-      const scoreB = Math.floor(Math.random() * 5);
+      // Use the current simulation mode with situational factors
+      const roundImportance = this.getRoundImportance(match.round);
+      const result = this.simulationModeService.simulateMatch(
+        match.teamA, 
+        match.teamB, 
+        {
+          roundImportance,
+          isNeutralVenue: true
+        }
+      );
 
-      match.scoreA = scoreA;
-      match.scoreB = scoreB;
+      match.scoreA = result.scoreA;
+      match.scoreB = result.scoreB;
 
       // Determine winner - if tied, go to penalties
-      if (scoreA > scoreB) {
+      if (result.scoreA > result.scoreB) {
         match.winner = match.teamA.name;
-      } else if (scoreB > scoreA) {
+      } else if (result.scoreB > result.scoreA) {
         match.winner = match.teamB.name;
       } else {
         // Penalty shootout for tied matches
@@ -32,6 +44,34 @@ export class KnockoutStage2ndService {
       }
 
       match.played = true;
+
+      // Update team Elo ratings after match (including penalty outcomes)
+      const finalScoreA = match.scoreA!;
+      const finalScoreB = match.scoreB!;
+      
+      // For penalty matches, adjust the score impact (draws go to Elo calculation as draws)
+      let eloScoreA = finalScoreA;
+      let eloScoreB = finalScoreB;
+      
+      // If penalties decided the match, treat as narrow victory for Elo calculation
+      if (match.wentToPenalties) {
+        if (match.winner === match.teamA.name) {
+          eloScoreA = finalScoreA + 0.1; // Slight edge to winner
+        } else {
+          eloScoreB = finalScoreB + 0.1; // Slight edge to winner
+        }
+      }
+      
+      const updatedTeams = this.eloUpdateService.updateTeamElosAfterMatch(
+        match.teamA,
+        match.teamB,
+        eloScoreA,
+        eloScoreB
+      );
+      
+      // Update match with new team Elo ratings
+      match.teamA = updatedTeams.teamA;
+      match.teamB = updatedTeams.teamB;
       
       // Log penalty results if needed
       if (match.wentToPenalties && match.penaltyScoreA !== undefined && match.penaltyScoreB !== undefined) {
@@ -64,6 +104,20 @@ export class KnockoutStage2ndService {
     } else if (penaltyScoreB > penaltyScoreA) {
       match.winner = match.teamB.name;
     } else this.simulatePenalties(match); //run it again until a team wins
+  }
+
+  /**
+   * Get round importance multiplier for match simulation
+   */
+  private getRoundImportance(round: string): number {
+    switch (round) {
+      case 'final': return 1.2;
+      case 'semi-finals': return 1.15;
+      case 'quarter-finals': return 1.1;
+      case 'round-of-16': return 1.05;
+      case 'third-place': return 1.0;
+      default: return 1.0;
+    }
   }
 
   // Check if all matches in an array are played
