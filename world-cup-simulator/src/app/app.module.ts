@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -33,6 +33,19 @@ import { JourneySummaryStatsComponent } from './summary-page/tournament-header/j
 import { JourneyMatchCardComponent } from './summary-page/tournament-header/journey-match-card/journey-match-card.component';
 import { PodiumPositionComponent } from './summary-page/tournament-header/standings/podium-position/podium-position.component';
 import { StatCardComponent } from './summary-page/shared/stat-card/stat-card.component';
+import { SimulationSettingsComponent } from './shared/components/simulation-settings';
+import { SimulationInfoPopupComponent } from './shared/components/simulation-info-popup';
+import { SettingsHeaderComponent } from './shared/components/simulation-settings/settings-header';
+import { ModeSelectionComponent } from './shared/components/simulation-settings/mode-selection';
+import { ModeDescriptionComponent } from './shared/components/simulation-settings/mode-description';
+import { PopupHeaderComponent } from './shared/components/simulation-info-popup/popup-header';
+import { ModeSectionComponent } from './shared/components/simulation-info-popup/mode-section';
+import { EloExplanationComponent } from './shared/components/simulation-info-popup/elo-explanation';
+import { ModeHeaderComponent } from './shared/components/simulation-info-popup/mode-section/mode-header';
+import { ModeDescriptionInfoComponent } from './shared/components/simulation-info-popup/mode-section/mode-description';
+import { TechnicalInfoComponent } from './shared/components/simulation-info-popup/mode-section/technical-info';
+import { ExampleSectionComponent } from './shared/components/simulation-info-popup/mode-section/example-section';
+import { ProsConsComponent } from './shared/components/simulation-info-popup/mode-section/pros-cons';
 
 
 @NgModule({
@@ -67,11 +80,25 @@ import { StatCardComponent } from './summary-page/shared/stat-card/stat-card.com
     JourneyMatchCardComponent,
     PodiumPositionComponent,
     StatCardComponent,
+    SimulationSettingsComponent,
+    SimulationInfoPopupComponent,
+    SettingsHeaderComponent,
+    ModeSelectionComponent,
+    ModeDescriptionComponent,
+    PopupHeaderComponent,
+    ModeSectionComponent,
+    EloExplanationComponent,
+    ModeHeaderComponent,
+    ModeDescriptionInfoComponent,
+    TechnicalInfoComponent,
+    ExampleSectionComponent,
+    ProsConsComponent,
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    FormsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

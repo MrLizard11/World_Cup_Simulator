@@ -1,4 +1,10 @@
 <div class="container">
+    <!-- Simulation Settings -->
+    <app-simulation-settings 
+        [isCompact]="false"
+        (modeChanged)="onSimulationModeChanged($event)">
+    </app-simulation-settings>
+
     <app-group-stage-buttons 
         [showMatches]="showMatches"
         [showGroupStandings]="showGroupStandings"
