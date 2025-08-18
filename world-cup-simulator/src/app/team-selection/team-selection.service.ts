@@ -14,7 +14,6 @@ export class TeamSelectionService {
     if (storedTeams) {
       try {
         this.selectedTeams = JSON.parse(storedTeams);
-        // Successful load - removed debug log
       } catch (error) {
         console.error('Error parsing stored teams in service:', error);
         this.initializeSelectedTeams();
@@ -40,13 +39,23 @@ export class TeamSelectionService {
       sessionStorage.setItem('selectedTeams', JSON.stringify(this.selectedTeams));
     } catch (error) {
       console.error('Failed to save teams to sessionStorage:', error);
-      // Could implement fallback storage or user notification here
     }
   }
 
-  // Public methods for component to use
   getSelectedTeams(): Team[] {
     return [...this.selectedTeams];
+  }
+
+  // Get teams organized by seeding pots 
+  getSeededPots(): { pot1: Team[], pot2: Team[], pot3: Team[], pot4: Team[] } {
+    const sortedTeams = [...this.selectedTeams].sort((a, b) => b.elo - a.elo);
+    
+    return {
+      pot1: sortedTeams.slice(0, 8),   // Top 8 teams (highest Elo)
+      pot2: sortedTeams.slice(8, 16),  // Teams 9-16
+      pot3: sortedTeams.slice(16, 24), // Teams 17-24
+      pot4: sortedTeams.slice(24, 32)  // Bottom 8 teams (lowest Elo)
+    };
   }
 
   getAvailableTeams(): string[] {

@@ -4,8 +4,18 @@
     font-family: 'Arial', sans-serif;
     color: white;
     display: flex;
-    gap: 30px;
+    gap: 20px;
     min-height: 100vh;
+}
+
+/* Controls sidebar - fixed width on the left */
+.controls-sidebar {
+    flex: 0 0 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-right: 20px;
+    border-right: 2px solid rgba(255,255,255,0.1);
 }
 
 .trophy-image {
@@ -178,7 +188,7 @@
     box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
 }
 
-/* Tournament bracket container */
+/* Tournament bracket container - takes remaining space */
 .tournament-bracket {
     flex: 1;
     display: flex;
@@ -275,9 +285,9 @@
     left: 100px;
 }
 
-/* Position final match card slightly to the right */
+/* Align final match card with 3rd place match */
 .final-column .match-details {
-    margin-left: 60px;
+    margin-left: 0px;
 }
 
 
@@ -515,6 +525,14 @@
     .container {
         flex-direction: column;
         gap: 20px;
+    }
+    
+    .controls-sidebar {
+        flex: none;
+        border-right: none;
+        border-bottom: 2px solid rgba(255,255,255,0.1);
+        padding-right: 0;
+        padding-bottom: 20px;
     }
     
     .simulate-round-button-list {

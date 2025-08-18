@@ -37,12 +37,7 @@ export class EloUpdateService {
       ...teamB,
       elo: Math.round(teamB.elo + matchStats.eloChangeB) // Round to nearest integer
     };
-    
-    // Log the changes for debugging/tracking
-    console.log(`🔄 Elo Updates after ${teamA.name} ${scoreA}-${scoreB} ${teamB.name}:`);
-    console.log(`📈 ${teamA.name}: ${teamA.elo} → ${updatedTeamA.elo} (${matchStats.eloChangeA > 0 ? '+' : ''}${Math.round(matchStats.eloChangeA)})`);
-    console.log(`📈 ${teamB.name}: ${teamB.elo} → ${updatedTeamB.elo} (${matchStats.eloChangeB > 0 ? '+' : ''}${Math.round(matchStats.eloChangeB)})`);
-    
+
     return {
       teamA: updatedTeamA,
       teamB: updatedTeamB
@@ -125,13 +120,13 @@ export class EloUpdateService {
     
     let description = '';
     if (isUpset) {
-      description = `🔥 Upset victory! ${winner} gains significant Elo points.`;
+      description = `Upset victory! ${winner} gains significant Elo points.`;
     } else if (impact === 'major') {
-      description = `💪 Dominant performance brings major Elo boost for ${winner}.`;
+      description = `Dominant performance brings major Elo boost for ${winner}.`;
     } else if (impact === 'moderate') {
-      description = `✅ Expected result with moderate Elo adjustment.`;
+      description = `Expected result with moderate Elo adjustment.`;
     } else {
-      description = `📊 Close match results in minor Elo changes.`;
+      description = `Close match results in minor Elo changes.`;
     }
     
     return {
@@ -147,12 +142,12 @@ export class EloUpdateService {
    * Apply tournament-wide Elo decay (optional feature)
    * Could be used between tournaments to bring extreme ratings back toward center
    */
-  applyEloDecay(teams: Team[], decayFactor: number = 0.02): Team[] {
-    const centerElo = 1600; // Standard Elo center point
+  // applyEloDecay(teams: Team[], decayFactor: number = 0.02): Team[] {
+  //   const centerElo = 1600; // Standard Elo center point
     
-    return teams.map(team => ({
-      ...team,
-      elo: Math.round(team.elo + (centerElo - team.elo) * decayFactor)
-    }));
-  }
+  //   return teams.map(team => ({
+  //     ...team,
+  //     elo: Math.round(team.elo + (centerElo - team.elo) * decayFactor)
+  //   }));
+  // }
 }
