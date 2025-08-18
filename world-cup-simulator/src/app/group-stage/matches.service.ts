@@ -59,12 +59,29 @@ export class MatchesService {
       const groups: Group[] = [];
       const groupNames = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
-      // Shuffle the teams randomly before dividing into groups
-      const shuffledTeams = this.shuffleArray([...selectedTeams]);
+      // Sort teams by Elo rating (highest to lowest) for seeding
+      const sortedTeams = [...selectedTeams].sort((a, b) => b.elo - a.elo);
 
-      // Divide shuffled teams into 8 groups of 4 teams each
+      // Create 4 pots of 8 teams each (FIFA-style seeding)
+      const pot1 = sortedTeams.slice(0, 8);   // Top 8 teams (highest Elo)
+      const pot2 = sortedTeams.slice(8, 16);  // Teams 9-16
+      const pot3 = sortedTeams.slice(16, 24); // Teams 17-24
+      const pot4 = sortedTeams.slice(24, 32); // Bottom 8 teams (lowest Elo)
+
+      // Shuffle each pot to add some randomness within strength tiers
+      const shuffledPot1 = this.shuffleArray(pot1);
+      const shuffledPot2 = this.shuffleArray(pot2);
+      const shuffledPot3 = this.shuffleArray(pot3);
+      const shuffledPot4 = this.shuffleArray(pot4);
+
+      // Assign teams to groups: one team from each pot per group
       for (let i = 0; i < 8; i++) {
-        const groupTeams = shuffledTeams.slice(i * 4, (i + 1) * 4);
+        const groupTeams = [
+          shuffledPot1[i], // One top-seeded team
+          shuffledPot2[i], // One second-tier team
+          shuffledPot3[i], // One third-tier team
+          shuffledPot4[i]  // One bottom-seeded team
+        ];
         const matches = this.generateMatchesForGroup(groupTeams, i + 1);
 
         groups.push({
