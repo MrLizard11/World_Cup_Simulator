@@ -31,7 +31,7 @@ export class SimulationModeService {
   simulateMatch(teamA: Team, teamB: Team, situationalFactors?: any): { scoreA: number, scoreB: number } {
     switch (this.currentMode) {
       case SimulationMode.RANDOM:
-        return this.simulateRandomMatch();
+        return this.generatePureRandomScores();
       
       case SimulationMode.ELO_SIMPLE:
         return this.matchSimulation.simulateSimpleEloMatch(teamA, teamB);
@@ -98,9 +98,9 @@ export class SimulationModeService {
   }
 
   /**
-   * Legacy random simulation for backwards compatibility
+   * Generate pure random scores (ignores team parameters for chaos mode)
    */
-  private simulateRandomMatch(): { scoreA: number, scoreB: number } {
+  private generatePureRandomScores(): { scoreA: number, scoreB: number } {
     return {
       scoreA: Math.floor(Math.random() * 5),
       scoreB: Math.floor(Math.random() * 5)
