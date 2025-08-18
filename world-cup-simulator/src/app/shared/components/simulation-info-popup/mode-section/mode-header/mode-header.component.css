@@ -1,0 +1,45 @@
+.mode-header {
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #2c3e50, #34495e);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.mode-header.active {
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+.mode-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.mode-icon {
+  font-size: 1.5rem;
+}
+
+.mode-title strong {
+  font-size: 1.1rem;
+  color: white;
+  font-weight: 600;
+}
+
+.current-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.mode-tagline {
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+  font-size: 0.9rem;
+  line-height: 1.3;
+}

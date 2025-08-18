@@ -4,6 +4,8 @@ import { Group, Match, GroupStandings, TeamStanding } from '../models/group.mode
 import { Observable, BehaviorSubject } from 'rxjs';
 import { KnockoutMatch } from '../models/knockouts.model';
 import { TournamentStateService } from '../summary-page/tournament-state.service';
+import { SimulationModeService } from '../shared/services/simulation-mode.service';
+import { EloUpdateService } from '../shared/services/elo-update.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +16,11 @@ export class MatchesService {
   top16: Team[] = [];
   roundOf16Matches: KnockoutMatch[] | undefined;
 
-  constructor(private tournamentState: TournamentStateService) { }
+  constructor(
+    private tournamentState: TournamentStateService,
+    private simulationModeService: SimulationModeService,
+    private eloUpdateService: EloUpdateService
+  ) { }
 
   resetGroupStage(): void {
     try {
@@ -135,16 +141,24 @@ export class MatchesService {
     return new BehaviorSubject(group).asObservable();
   }
 
-  // Simulate a match between two teams by generating random score for each between 0 and 4
+  // Simulate a match between two teams using Elo ratings and realistic algorithms
   simulateMatch(teamA: Team, teamB: Team): Observable<{ teamA: Team, teamB: Team, scoreA: number, scoreB: number }> {
-    const scoreA = Math.floor(Math.random() * 5);
-    const scoreB = Math.floor(Math.random() * 5);
+    // Use the current simulation mode
+    const result = this.simulationModeService.simulateMatch(teamA, teamB);
+
+    // Update team Elo ratings based on match result
+    const updatedTeams = this.eloUpdateService.updateTeamElosAfterMatch(
+      teamA, 
+      teamB, 
+      result.scoreA, 
+      result.scoreB
+    );
 
     return new BehaviorSubject({
-      teamA: teamA,
-      teamB: teamB,
-      scoreA: scoreA,
-      scoreB: scoreB
+      teamA: updatedTeams.teamA,  // Return updated team with new Elo
+      teamB: updatedTeams.teamB,  // Return updated team with new Elo
+      scoreA: result.scoreA,
+      scoreB: result.scoreB
     }).asObservable();
   }
 
@@ -154,6 +168,10 @@ export class MatchesService {
     const teamBStanding = groupStandings.find(s => s.team.name === match.teamB.name);
 
     if (teamAStanding && teamBStanding) {
+      // Update team references with new Elo ratings
+      teamAStanding.team = match.teamA; // This will have the updated Elo
+      teamBStanding.team = match.teamB; // This will have the updated Elo
+      
       // Update matches played
       teamAStanding.matchesPlayed++;
       teamBStanding.matchesPlayed++;
@@ -202,9 +220,11 @@ export class MatchesService {
 
   simulateMatchInPlace(match: Match, groupStandings: TeamStanding[]) {
     try {
-      // Simulate the match with random scores
-      match.scoreA = Math.floor(Math.random() * 5);
-      match.scoreB = Math.floor(Math.random() * 5);
+      // Use the current simulation mode instead of pure random
+      const result = this.simulationModeService.simulateMatch(match.teamA, match.teamB);
+      
+      match.scoreA = result.scoreA;
+      match.scoreB = result.scoreB;
       match.played = true;
 
       // Update standings

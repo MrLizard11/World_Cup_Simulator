@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Team } from '../models';
 import { KnockoutMatch } from '../models/knockouts.model';
 import { KnockoutStageService } from './knockout-stage.service';
+import { SimulationMode } from '../shared/services/simulation-mode.service';
 
 @Component({
   selector: 'app-knockout-stage',
@@ -101,6 +102,11 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
       match.played = false;
       match.winner = '';
     }
+  }
+
+  onSimulationModeChanged(mode: SimulationMode): void {
+    console.log('Simulation mode changed to:', mode);
+    // The mode is automatically updated in the service, no additional action needed
   }
 
   runAllRoundOf16() {

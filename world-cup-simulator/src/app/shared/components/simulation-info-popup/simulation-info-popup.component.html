@@ -1,0 +1,18 @@
+<div class="popup-overlay" *ngIf="isVisible" (click)="close()">
+  <div class="popup-container" (click)="$event.stopPropagation()">
+    <!-- Popup Header Component -->
+    <app-popup-header (closeRequested)="close()"></app-popup-header>
+    
+    <div class="popup-content">
+      <!-- Mode Section Components -->
+      <app-mode-section 
+        *ngFor="let mode of modes" 
+        [mode]="mode" 
+        [currentMode]="currentMode">
+      </app-mode-section>
+      
+      <!-- Elo Explanation Component -->
+      <app-elo-explanation></app-elo-explanation>
+    </div>
+  </div>
+</div>

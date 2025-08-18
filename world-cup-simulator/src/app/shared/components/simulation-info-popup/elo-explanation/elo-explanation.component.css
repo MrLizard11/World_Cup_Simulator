@@ -1,0 +1,70 @@
+.footer-info {
+  margin-top: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+}
+
+.footer-info h3 {
+  margin: 0 0 15px 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.elo-explanation p {
+  margin-bottom: 15px;
+  line-height: 1.6;
+}
+
+.elo-explanation p:last-child {
+  margin-bottom: 0;
+  text-align: center;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.elo-examples {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.elo-tier {
+  padding: 10px 15px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.9rem;
+  transition: transform 0.2s ease;
+}
+
+.elo-tier:hover {
+  transform: translateY(-2px);
+}
+
+.elo-tier.elite {
+  background: rgba(255, 215, 0, 0.2);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+}
+
+.elo-tier.strong {
+  background: rgba(192, 192, 192, 0.2);
+  border: 1px solid rgba(192, 192, 192, 0.4);
+}
+
+.elo-tier.decent {
+  background: rgba(205, 127, 50, 0.2);
+  border: 1px solid rgba(205, 127, 50, 0.4);
+}
+
+.elo-tier.developing {
+  background: rgba(119, 136, 153, 0.2);
+  border: 1px solid rgba(119, 136, 153, 0.4);
+}
+
+@media (max-width: 768px) {
+  .elo-examples {
+    grid-template-columns: 1fr;
+  }
+}
