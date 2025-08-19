@@ -334,6 +334,7 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
         roundOf16Simulated: this.roundOf16Simulated,
         quarterFinalsSimulated: this.quarterFinalsSimulated,
         semiFinalsSimulated: this.semiFinalsSimulated,
+        thirdPlaceSimulated: this.thirdPlaceSimulated,
         finalSimulated: this.finalSimulated,
         allMatchesSimulated: this.allMatchesSimulated
       });
@@ -350,6 +351,10 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
 
         if (result.updates.semiFinalsSimulated !== undefined) {
           this.semiFinalsSimulated = result.updates.semiFinalsSimulated;
+        }
+
+        if (result.updates.thirdPlaceSimulated !== undefined) {
+          this.thirdPlaceSimulated = result.updates.thirdPlaceSimulated;
         }
 
         if (result.updates.finalSimulated !== undefined) {
@@ -374,6 +379,7 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
       this.roundOf16Simulated = false;
       this.quarterFinalsSimulated = false;
       this.semiFinalsSimulated = false;
+      this.thirdPlaceSimulated = false;
       this.finalSimulated = false;
       this.allMatchesSimulated = false;
     } catch (error) {

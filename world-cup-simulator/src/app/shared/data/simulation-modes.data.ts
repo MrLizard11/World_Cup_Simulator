@@ -3,7 +3,6 @@ import { SimulationMode } from '../services/simulation-mode.service';
 export interface ModeInfo {
   mode: SimulationMode;
   name: string;
-  icon: string;
   tagline: string;
   description: string;
   technicalPoints: string[];
@@ -21,7 +20,6 @@ export const SIMULATION_MODES_DATA: ModeInfo[] = [
   {
     mode: SimulationMode.RANDOM,
     name: 'Random Mode',
-    icon: '🎲',
     tagline: 'Pure chaos - anything can happen!',
     description: 'Each team gets a completely random score between 0-4 goals. Team strength has no impact on the result.',
     technicalPoints: [
@@ -52,7 +50,6 @@ export const SIMULATION_MODES_DATA: ModeInfo[] = [
   {
     mode: SimulationMode.ELO_SIMPLE,
     name: 'Elo Simple',
-    icon: '⚡',
     tagline: 'Random scores with team strength multipliers',
     description: 'Generates random base scores, then applies strength multipliers based on Elo rating differences.',
     technicalPoints: [
@@ -83,7 +80,6 @@ export const SIMULATION_MODES_DATA: ModeInfo[] = [
   {
     mode: SimulationMode.ELO_REALISTIC,
     name: 'Elo Realistic',
-    icon: '🎯',
     tagline: 'Statistically accurate football simulation',
     description: 'Uses proper Elo win probability calculations combined with Poisson distribution for realistic goal generation.',
     technicalPoints: [
@@ -114,7 +110,6 @@ export const SIMULATION_MODES_DATA: ModeInfo[] = [
   {
     mode: SimulationMode.ELO_ADVANCED,
     name: 'Elo Advanced',
-    icon: '🏆',
     tagline: 'Professional-grade tournament simulation',
     description: 'Most sophisticated mode including match importance, team form, situational factors, and controlled randomness.',
     technicalPoints: [

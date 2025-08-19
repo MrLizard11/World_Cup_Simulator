@@ -12,6 +12,7 @@
   
   <button class="simulate-btn" 
           *ngIf="showSimulateButton && !match?.played"
+          [disabled]="isSimulateDisabled"
           (click)="onSimulate(); $event.stopPropagation()">
     {{ buttonText }}
   </button>

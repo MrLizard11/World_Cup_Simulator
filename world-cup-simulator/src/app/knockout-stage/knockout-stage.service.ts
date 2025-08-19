@@ -126,27 +126,20 @@ export class KnockoutStageService {
       this.leftBracketRoundOf16 = [];
       this.rightBracketRoundOf16 = [];
     
-    // Left bracket - first 8 teams (groups A,C,E,G winners + B,D,F,H runners-up)
-    for (let i = 0; i < 4; i++) {
-      this.leftBracketRoundOf16.push({
-        teamA: top16[i],
-        teamB: top16[i + 8],
-        scoreA: undefined,
-        scoreB: undefined,
-        penaltyScoreA: undefined,
-        penaltyScoreB: undefined,
-        wentToPenalties: false,
-        played: false,
-        round: 'round-of-16',
-        winner: ''
-      });
-    }
+      // Extract winners and runners-up from each group
+      // top16 array is ordered: [A1, A2, B1, B2, C1, C2, D1, D2, E1, E2, F1, F2, G1, G2, H1, H2]
+      const groupWinners = [];
+      const groupRunnersUp = [];
+      
+      for (let i = 0; i < 16; i += 2) {
+        groupWinners.push(top16[i]);     // Winners: A1, B1, C1, D1, E1, F1, G1, H1
+        groupRunnersUp.push(top16[i + 1]); // Runners-up: A2, B2, C2, D2, E2, F2, G2, H2
+      }
 
-    // Right bracket - remaining 8 teams (groups B,D,F,H winners + A,C,E,G runners-up)
-    for (let i = 4; i < 8; i++) {
-      this.rightBracketRoundOf16.push({
-        teamA: top16[i],
-        teamB: top16[i + 8],
+      // Left bracket
+      this.leftBracketRoundOf16.push({
+        teamA: groupWinners[0], // Winner Group A
+        teamB: groupRunnersUp[1], // Runner-up Group B
         scoreA: undefined,
         scoreB: undefined,
         penaltyScoreA: undefined,
@@ -156,7 +149,109 @@ export class KnockoutStageService {
         round: 'round-of-16',
         winner: ''
       });
-    }
+
+      this.leftBracketRoundOf16.push({
+        teamA: groupWinners[2], // Winner Group C
+        teamB: groupRunnersUp[3], // Runner-up Group D
+        scoreA: undefined,
+        scoreB: undefined,
+        penaltyScoreA: undefined,
+        penaltyScoreB: undefined,
+        wentToPenalties: false,
+        played: false,
+        round: 'round-of-16',
+        winner: ''
+      });
+
+      this.leftBracketRoundOf16.push({
+        teamA: groupWinners[4], // Winner Group E
+        teamB: groupRunnersUp[5], // Runner-up Group F
+        scoreA: undefined,
+        scoreB: undefined,
+        penaltyScoreA: undefined,
+        penaltyScoreB: undefined,
+        wentToPenalties: false,
+        played: false,
+        round: 'round-of-16',
+        winner: ''
+      });
+
+      this.leftBracketRoundOf16.push({
+        teamA: groupWinners[6], // Winner Group G
+        teamB: groupRunnersUp[7], // Runner-up Group H
+        scoreA: undefined,
+        scoreB: undefined,
+        penaltyScoreA: undefined,
+        penaltyScoreB: undefined,
+        wentToPenalties: false,
+        played: false,
+        round: 'round-of-16',
+        winner: ''
+      });
+
+      // Right bracket
+      this.rightBracketRoundOf16.push({
+        teamA: groupWinners[1], // Winner Group B
+        teamB: groupRunnersUp[0], // Runner-up Group A
+        scoreA: undefined,
+        scoreB: undefined,
+        penaltyScoreA: undefined,
+        penaltyScoreB: undefined,
+        wentToPenalties: false,
+        played: false,
+        round: 'round-of-16',
+        winner: ''
+      });
+
+      this.rightBracketRoundOf16.push({
+        teamA: groupWinners[3], // Winner Group D
+        teamB: groupRunnersUp[2], // Runner-up Group C
+        scoreA: undefined,
+        scoreB: undefined,
+        penaltyScoreA: undefined,
+        penaltyScoreB: undefined,
+        wentToPenalties: false,
+        played: false,
+        round: 'round-of-16',
+        winner: ''
+      });
+
+      this.rightBracketRoundOf16.push({
+        teamA: groupWinners[5], // Winner Group F
+        teamB: groupRunnersUp[4], // Runner-up Group E
+        scoreA: undefined,
+        scoreB: undefined,
+        penaltyScoreA: undefined,
+        penaltyScoreB: undefined,
+        wentToPenalties: false,
+        played: false,
+        round: 'round-of-16',
+        winner: ''
+      });
+
+      this.rightBracketRoundOf16.push({
+        teamA: groupWinners[7], // Winner Group H
+        teamB: groupRunnersUp[6], // Runner-up Group G
+        scoreA: undefined,
+        scoreB: undefined,
+        penaltyScoreA: undefined,
+        penaltyScoreB: undefined,
+        wentToPenalties: false,
+        played: false,
+        round: 'round-of-16',
+        winner: ''
+      });
+
+      console.log('🏆 FIFA-style Round of 16 Draw:');
+      console.log('Left Bracket:');
+      this.leftBracketRoundOf16.forEach((match, index) => {
+        console.log(`  Match ${index + 1}: ${match.teamA.name} vs ${match.teamB.name}`);
+      });
+      console.log('Right Bracket:');
+      this.rightBracketRoundOf16.forEach((match, index) => {
+        console.log(`  Match ${index + 5}: ${match.teamA.name} vs ${match.teamB.name}`);
+      });
+
     } catch (error) {
       console.error('Error drawing Round of 16 matches:', error);
       // Reset brackets on error
@@ -298,6 +393,7 @@ export class KnockoutStageService {
     roundOf16Simulated: boolean,
     quarterFinalsSimulated: boolean,
     semiFinalsSimulated: boolean,
+    thirdPlaceSimulated: boolean,
     finalSimulated: boolean,
     allMatchesSimulated: boolean
   }): {
@@ -306,6 +402,7 @@ export class KnockoutStageService {
       roundOf16Simulated?: boolean,
       quarterFinalsSimulated?: boolean,
       semiFinalsSimulated?: boolean,
+      thirdPlaceSimulated?: boolean,
       finalSimulated?: boolean,
       allMatchesSimulated?: boolean
     }
@@ -315,6 +412,7 @@ export class KnockoutStageService {
       roundOf16Simulated?: boolean,
       quarterFinalsSimulated?: boolean,
       semiFinalsSimulated?: boolean,
+      thirdPlaceSimulated?: boolean,
       finalSimulated?: boolean,
       allMatchesSimulated?: boolean
     } = {};
@@ -338,6 +436,12 @@ export class KnockoutStageService {
       shouldUpdateState = true;
     }
 
+    // Check Third Place Match completion
+    if (!componentState.thirdPlaceSimulated && this.thirdPlaceMatch?.played) {
+      updates.thirdPlaceSimulated = true;
+      shouldUpdateState = true;
+    }
+
     // Check Final completion
     if (!componentState.finalSimulated && completionStatus.final) {
       updates.finalSimulated = true;
@@ -348,12 +452,14 @@ export class KnockoutStageService {
     const newRoundOf16State = updates.roundOf16Simulated ?? componentState.roundOf16Simulated;
     const newQuarterFinalsState = updates.quarterFinalsSimulated ?? componentState.quarterFinalsSimulated;
     const newSemiFinalsState = updates.semiFinalsSimulated ?? componentState.semiFinalsSimulated;
+    const newThirdPlaceState = updates.thirdPlaceSimulated ?? componentState.thirdPlaceSimulated;
     const newFinalState = updates.finalSimulated ?? componentState.finalSimulated;
 
     if (!componentState.allMatchesSimulated && 
         newRoundOf16State && 
         newQuarterFinalsState && 
         newSemiFinalsState && 
+        newThirdPlaceState &&
         newFinalState) {
       updates.allMatchesSimulated = true;
       shouldUpdateState = true;
