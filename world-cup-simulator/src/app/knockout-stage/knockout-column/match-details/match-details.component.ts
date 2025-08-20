@@ -22,9 +22,29 @@ export class MatchDetailsComponent {
   @Input() size: 'small' | 'medium' | 'large' = 'medium';
   @Input() layout: 'vertical' | 'horizontal' = 'vertical';
   @Input() showPlayedIndicator: boolean = true;
+  @Input() isThirdPlaceMatchPlayed: boolean = false; // New input to track 3rd place match status
 
   @Output() simulateMatch = new EventEmitter<any>();
   @Output() matchClick = new EventEmitter<any>();
+
+  // Check if this is a final match
+  get isFinalMatch(): boolean {
+    return this.match?.round === 'final';
+  }
+
+  // Check if simulate button should be disabled
+  get isSimulateDisabled(): boolean {
+    if (!this.showSimulateButton || this.match?.played) {
+      return true;
+    }
+    
+    // Disable final match simulation until 3rd place match is completed
+    if (this.isFinalMatch && !this.isThirdPlaceMatchPlayed) {
+      return true;
+    }
+    
+    return false;
+  }
 
   isWinner(team: 'A' | 'B'): boolean {
     if (!this.match?.played || !this.match?.winner) return false;

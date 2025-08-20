@@ -13,6 +13,7 @@ export class KnockoutColumnComponent {
   @Input() roundLabel: string = '';
   @Input() columnClass: string = '';
   @Input() showBothSides: boolean = true; // For rounds that have left/right splits
+  @Input() isThirdPlaceMatchPlayed: boolean = false;
 
   @Output() simulateMatch = new EventEmitter<KnockoutMatch>();
 

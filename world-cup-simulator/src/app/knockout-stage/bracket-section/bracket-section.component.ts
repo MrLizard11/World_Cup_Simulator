@@ -11,6 +11,7 @@ export class BracketSectionComponent {
   @Input() matches: KnockoutMatch[] = [];
   @Input() side: 'left' | 'right' | 'center' = 'center';
   @Input() round: 'round-of-16' | 'quarter-finals' | 'semi-finals' | 'final' = 'round-of-16';
+  @Input() isThirdPlaceMatchPlayed: boolean = false;
 
   @Output() simulateMatch = new EventEmitter<KnockoutMatch>();
 

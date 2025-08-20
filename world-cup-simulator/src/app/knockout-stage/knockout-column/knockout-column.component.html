@@ -5,6 +5,7 @@
         [matches]="leftMatches"
         [side]="'left'"
         [round]="getRoundType()"
+        [isThirdPlaceMatchPlayed]="isThirdPlaceMatchPlayed"
         (simulateMatch)="onSimulateMatch($event)">
     </app-bracket-section>
     
@@ -14,6 +15,7 @@
         [matches]="rightMatches"
         [side]="'right'"
         [round]="getRoundType()"
+        [isThirdPlaceMatchPlayed]="isThirdPlaceMatchPlayed"
         (simulateMatch)="onSimulateMatch($event)">
     </app-bracket-section>
     
@@ -23,6 +25,7 @@
         [matches]="leftMatches"
         [side]="'center'"
         [round]="'final'"
+        [isThirdPlaceMatchPlayed]="isThirdPlaceMatchPlayed"
         (simulateMatch)="onSimulateMatch($event)">
     </app-bracket-section>
 </div>
