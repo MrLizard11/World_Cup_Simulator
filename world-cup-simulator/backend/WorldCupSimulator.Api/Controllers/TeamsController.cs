@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WorldCupSimulator.Api.Data;
-using WorldCupSimulator.Api.Models;
+using Microsoft.Extensions.Logging;
+using WorldCupSimulator.Api.DTOs;
+using WorldCupSimulator.Api.Services;
 
 namespace WorldCupSimulator.Api.Controllers;
 
@@ -9,89 +9,96 @@ namespace WorldCupSimulator.Api.Controllers;
 [Route("api/[controller]")]
 public class TeamsController : ControllerBase
 {
-    private readonly WorldCupContext _context;
+    private readonly ITeamService _teamService;
+    private readonly ILogger<TeamsController> _logger;
 
-    public TeamsController(WorldCupContext context)
+    public TeamsController(ITeamService teamService, ILogger<TeamsController> logger)
     {
-        _context = context;
+        _teamService = teamService;
+        _logger = logger;
     }
 
     // GET: api/teams
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Team>>> GetTeams()
+    public async Task<ActionResult<IEnumerable<TeamResponse>>> GetTeams()
     {
-        return await _context.Teams.ToListAsync();
+        var teams = await _teamService.GetTeamsAsync();
+        return Ok(teams);
     }
 
     // GET: api/teams/5
     [HttpGet("{id}")]
-    public async Task<ActionResult<Team>> GetTeam(int id)
+    public async Task<ActionResult<TeamResponse>> GetTeam(int id)
     {
-        var team = await _context.Teams.FindAsync(id);
-
+        var team = await _teamService.GetTeamByIdAsync(id);
+        
         if (team == null)
         {
+            _logger.LogWarning("Team with ID {TeamId} not found", id);
             return NotFound();
         }
 
-        return team;
+        return Ok(team);
     }
 
     // POST: api/teams
     [HttpPost]
-    public async Task<ActionResult<Team>> CreateTeam(Team team)
+    public async Task<ActionResult<TeamResponse>> CreateTeam(CreateTeamRequest request)
     {
-        _context.Teams.Add(team);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetTeam), new { id = team.Id }, team);
+        try
+        {
+            _logger.LogInformation("Creating new team: {TeamName}", request.Name);
+            var team = await _teamService.CreateTeamAsync(request);
+            return CreatedAtAction(nameof(GetTeam), new { id = team.Id }, team);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating team: {TeamName}", request.Name);
+            return StatusCode(500, "An error occurred while creating the team");
+        }
     }
 
     // PUT: api/teams/5
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateTeam(int id, Team team)
+    public async Task<ActionResult<TeamResponse>> UpdateTeam(int id, UpdateTeamRequest request)
     {
-        if (id != team.Id)
-        {
-            return BadRequest();
-        }
-
-        _context.Entry(team).State = EntityState.Modified;
-
         try
         {
-            await _context.SaveChangesAsync();
+            _logger.LogInformation("Updating team {TeamId}", id);
+            var team = await _teamService.UpdateTeamAsync(id, request);
+            return Ok(team);
         }
-        catch (DbUpdateConcurrencyException)
+        catch (KeyNotFoundException ex)
         {
-            if (!TeamExists(id))
-            {
-                return NotFound();
-            }
-            throw;
+            _logger.LogWarning(ex, "Team {TeamId} not found for update", id);
+            return NotFound(ex.Message);
         }
-
-        return NoContent();
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating team {TeamId}", id);
+            return StatusCode(500, "An error occurred while updating the team");
+        }
     }
 
     // DELETE: api/teams/5
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteTeam(int id)
     {
-        var team = await _context.Teams.FindAsync(id);
-        if (team == null)
+        try
         {
-            return NotFound();
+            _logger.LogInformation("Deleting team {TeamId}", id);
+            await _teamService.DeleteTeamAsync(id);
+            return NoContent();
         }
-
-        _context.Teams.Remove(team);
-        await _context.SaveChangesAsync();
-
-        return NoContent();
-    }
-
-    private bool TeamExists(int id)
-    {
-        return _context.Teams.Any(e => e.Id == id);
+        catch (KeyNotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Team {TeamId} not found for deletion", id);
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting team {TeamId}", id);
+            return StatusCode(500, "An error occurred while deleting the team");
+        }
     }
 }

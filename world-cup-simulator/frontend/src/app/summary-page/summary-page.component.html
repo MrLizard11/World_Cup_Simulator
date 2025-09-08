@@ -1,0 +1,38 @@
+<div class="summary-container">
+  <!-- Show no data message when tournament is not complete -->
+  <div *ngIf="!isDataAvailable" class="no-data-message">
+    <app-tournament-progress [tournamentState]="tournamentState"></app-tournament-progress>
+    <app-navigation-buttons 
+      (restartTournament)="restartTournament()"
+      (goToKnockouts)="goToKnockouts()"
+      (goToGroupStage)="goToGroupStage()">
+    </app-navigation-buttons>
+  </div>
+
+  <!-- Tournament Summary Content -->
+  <div *ngIf="isDataAvailable" class="tournament-summary">
+    
+    <!-- Tournament Header (Champion, Final Match, Top 4) -->
+    <app-tournament-header
+      [champion]="champion"
+      [runnerUp]="runnerUp"
+      [semiFinalTeams]="semiFinalTeams"
+      [finalMatch]="finalMatch"
+      [topPerformers]="topPerformers">
+    </app-tournament-header>
+
+    <!-- Tournament Statistics, Highlights, Champion Journey -->
+    <app-tournament-stats
+      [tournamentStats]="tournamentStats"
+      [championJourney]="championJourney"
+      [champion]="champion">
+    </app-tournament-stats>
+
+    <!-- Action Buttons at the bottom -->
+    <div class="action-buttons">
+      <button class="action-btn restart-btn" (click)="restartTournament()">
+        🔄 New Tournament
+      </button>
+    </div>
+  </div>
+</div>

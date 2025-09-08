@@ -1,0 +1,23 @@
+<div class="position-info">
+  <div class="position-badge">
+    <span class="position-number">{{ position }}</span>
+    <span class="position-suffix">{{ getPositionSuffix() }}</span>
+  </div>
+  
+  <div class="team-details">
+    <div class="team-identity">
+      <span class="team-flag">{{ team.countryCode }}</span>
+      <div class="team-text">
+        <h3 class="team-name">{{ team.name }}</h3>
+        <p class="team-country">{{ team.country }}</p>
+      </div>
+    </div>
+    
+    <div class="team-stats" *ngIf="showStats">
+      <div class="stat-item">
+        <span class="stat-label">ELO Rating</span>
+        <span class="stat-value elo">{{ team.elo | number:'1.0-0' }}</span>
+      </div>
+    </div>
+  </div>
+</div>

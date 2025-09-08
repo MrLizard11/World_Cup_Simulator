@@ -1,0 +1,31 @@
+<div class="round-column" [class]="columnClass">
+    <!-- Left bracket section -->
+    <app-bracket-section 
+        *ngIf="showBothSides && leftMatches.length > 0"
+        [matches]="leftMatches"
+        [side]="'left'"
+        [round]="getRoundType()"
+        [isThirdPlaceMatchPlayed]="isThirdPlaceMatchPlayed"
+        (simulateMatch)="onSimulateMatch($event)">
+    </app-bracket-section>
+    
+    <!-- Right bracket section -->
+    <app-bracket-section 
+        *ngIf="showBothSides && rightMatches.length > 0"
+        [matches]="rightMatches"
+        [side]="'right'"
+        [round]="getRoundType()"
+        [isThirdPlaceMatchPlayed]="isThirdPlaceMatchPlayed"
+        (simulateMatch)="onSimulateMatch($event)">
+    </app-bracket-section>
+    
+    <!-- Single match (for finals) - only show one set of matches -->
+    <app-bracket-section 
+        *ngIf="!showBothSides && leftMatches.length > 0"
+        [matches]="leftMatches"
+        [side]="'center'"
+        [round]="'final'"
+        [isThirdPlaceMatchPlayed]="isThirdPlaceMatchPlayed"
+        (simulateMatch)="onSimulateMatch($event)">
+    </app-bracket-section>
+</div>

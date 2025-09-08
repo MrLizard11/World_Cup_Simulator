@@ -1,0 +1,13 @@
+<div class="mode-selection">
+  <div class="selection-row">
+    <label *ngIf="!isCompact">Algorithm:</label>
+    <button class="info-btn compact" *ngIf="isCompact" (click)="onInfoClick()" title="Learn about algorithms">
+      <span class="info-icon">ℹ️</span>
+    </button>
+    <select [(ngModel)]="selectedMode" (ngModelChange)="onModeChange($event)" class="mode-select">
+      <option *ngFor="let mode of availableModes" [value]="mode.mode">
+        {{mode.name}}
+      </option>
+    </select>
+  </div>
+</div>

@@ -1,8 +1,0 @@
-<!-- Winner announcement at the top -->
-<div class="winner-announcement" *ngIf="finalMatch && finalMatch.played">
-    <h2>🏆 Champion: {{ finalMatch.winner }}</h2>
-    <img src="assets/worldCup.png" alt="Trophy" class="trophy-image">
-</div>
-<div class="go-to-summary-page-btn" *ngIf="finalMatch && finalMatch.played && finalMatch.winner">
-    <button class="go-to-summary-page" routerLink="/summary-page" routerLinkActive="active">Head To Tournament Summary</button>
-</div>

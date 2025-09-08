@@ -4,9 +4,9 @@ namespace WorldCupSimulator.Api.DTOs
     {
         public int GroupId { get; set; }
         public int TeamId { get; set; }
-        public string TeamName { get; set; }
-        public string TeamCountry { get; set; }
-        public string TeamCountryCode { get; set; }
+        public string? TeamName { get; set; }
+        public string? TeamCountry { get; set; }
+        public string? TeamCountryCode { get; set; }
         public int TeamElo { get; set; }
         public int Points { get; set; }
         public int MatchesPlayed { get; set; }

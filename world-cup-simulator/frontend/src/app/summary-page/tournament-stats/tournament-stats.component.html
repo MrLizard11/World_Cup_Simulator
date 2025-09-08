@@ -1,0 +1,18 @@
+<!-- Tournament Statistics -->
+<app-tournament-statistics-grid [tournamentStats]="tournamentStats"></app-tournament-statistics-grid>
+
+<!-- Match Highlights -->
+<app-match-highlights-section [tournamentStats]="tournamentStats"></app-match-highlights-section>
+
+<!-- Champion's Journey -->
+<div *ngIf="champion && championJourney" class="champions-journey">
+  <app-champions-journey-header [champion]="champion"></app-champions-journey-header>
+  
+  <div class="journey-card">
+    <!-- Journey Matches -->
+    <app-journey-matches-timeline [championJourney]="championJourney"></app-journey-matches-timeline>
+    
+    <!-- Journey Summary Stats -->
+    <app-journey-summary-stats [championJourney]="championJourney"></app-journey-summary-stats>
+  </div>
+</div>

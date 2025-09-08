@@ -1,0 +1,121 @@
+.final-match-results {
+  margin-bottom: 40px;
+}
+
+.final-match-results h2 {
+  color: #FFD700;
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 25px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.match-card {
+  background: rgba(255,255,255,0.1);
+  border-radius: 15px;
+  padding: 25px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.match-teams {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.team {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+}
+
+.team:last-child {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.team-flag {
+  font-size: 2.5rem;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+
+.team-name {
+  color: white;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.match-score {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: rgba(0,0,0,0.3);
+  padding: 15px 25px;
+  border-radius: 25px;
+  border: 2px solid #FFD700;
+}
+
+.score {
+  color: #FFD700;
+  font-size: 2rem;
+  font-weight: bold;
+  min-width: 40px;
+  text-align: center;
+}
+
+.vs {
+  color: white;
+  font-size: 1.5rem;
+  opacity: 0.7;
+}
+
+.match-details {
+  text-align: center;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255,255,255,0.2);
+}
+
+.penalty-info {
+  margin: 0;
+  color: #FF6B6B;
+}
+
+.penalty-label {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.penalty-score {
+  color: #FFD700;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .match-teams {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .team {
+    justify-content: center;
+    text-align: center;
+  }
+  
+  .team:last-child {
+    flex-direction: row;
+  }
+  
+  .match-score {
+    order: -1;
+  }
+}

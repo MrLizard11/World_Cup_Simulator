@@ -1,0 +1,32 @@
+<div class="container">
+    <!-- Simulation Settings -->
+    <app-simulation-settings 
+        [isCompact]="false"
+        (modeChanged)="onSimulationModeChanged($event)">
+    </app-simulation-settings>
+
+    <app-group-stage-buttons 
+        [showMatches]="showMatches"
+        [showGroupStandings]="showGroupStandings"
+        (simulateAllMatches)="runAllMatches()"
+        (toggleMatches)="onToggleMatches($event)"
+        (toggleStandings)="onToggleStandings($event)">
+    </app-group-stage-buttons>
+
+    <app-group-stage-matches 
+        [groups]="groups"
+        [showMatches]="showMatches"
+        (matchSimulated)="simulateMatch($event)">
+    </app-group-stage-matches>
+
+    <app-group-stage-standings 
+        [groups]="groups"
+        [groupStandings]="groupStandings"
+        [showGroupStandings]="showGroupStandings">
+    </app-group-stage-standings>
+
+    <!-- Go to Next Stage Button -->
+    <div class="go-to-next-stage" *ngIf="showGroupStandings || canProceedToNextStage()">
+        <button><a routerLink="/knockout-stage" routerLinkActive="active" (click)="goToNextStage()">Go to Knockout Stage</a></button>
+    </div>
+</div>

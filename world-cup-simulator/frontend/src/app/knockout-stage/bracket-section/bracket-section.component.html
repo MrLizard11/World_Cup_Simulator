@@ -1,0 +1,12 @@
+<div class="bracket-section" [ngClass]="getSectionClasses()">
+    <app-match-details 
+        *ngFor="let match of matches"
+        [match]="match"
+        [showSimulateButton]="true"
+        [buttonText]="'Simulate'"
+        [size]="'medium'"
+        [layout]="'vertical'"
+        [isThirdPlaceMatchPlayed]="isThirdPlaceMatchPlayed"
+        (simulateMatch)="onSimulateMatch($event)">
+    </app-match-details>
+</div>

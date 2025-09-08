@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using WorldCupSimulator.Api.Data;
 using WorldCupSimulator.Api.DTOs;
 using WorldCupSimulator.Api.Models;
@@ -11,10 +12,12 @@ namespace WorldCupSimulator.Api.Controllers;
 public class MatchesController : ControllerBase
 {
     private readonly WorldCupContext _context;
+    private readonly ILogger<MatchesController> _logger;
 
-    public MatchesController(WorldCupContext context)
+    public MatchesController(WorldCupContext context, ILogger<MatchesController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     // GET: api/matches
@@ -70,7 +73,7 @@ public class MatchesController : ControllerBase
     [HttpGet("group/{groupId}")]
     public async Task<ActionResult<IEnumerable<Match>>> GetMatchesByGroup(int groupId)
     {
-        if (! _context.Matches.Any(m => m.GroupId == groupId))
+        if (!_context.Matches.Any(m => m.GroupId == groupId))
         {
             return new List<Match>();
         }
@@ -90,12 +93,12 @@ public class MatchesController : ControllerBase
         {
             var teamA = await _context.Teams.FindAsync(request.TeamAId);
             var teamB = await _context.Teams.FindAsync(request.TeamBId);
-            
+
             if (teamA == null)
             {
                 return BadRequest($"Team A with ID {request.TeamAId} not found");
             }
-            
+
             if (teamB == null)
             {
                 return BadRequest($"Team B with ID {request.TeamBId} not found");
@@ -133,7 +136,8 @@ public class MatchesController : ControllerBase
                 GroupId = request.GroupId,
                 ScoreA = request.ScoreA,
                 ScoreB = request.ScoreB,
-                Played = request.Played
+                Played = request.Played,
+                MatchType = "Group"  // Explicitly set the discriminator
             };
 
             _context.Matches.Add(match);
@@ -142,15 +146,25 @@ public class MatchesController : ControllerBase
             await _context.Entry(match).ReloadAsync();
 
             // Explicitly load related entities
-            await _context.Entry(match).Reference(m => m.TeamA).LoadAsync();
-            await _context.Entry(match).Reference(m => m.TeamB).LoadAsync();
-            await _context.Entry(match).Reference(m => m.Group).LoadAsync();
+            var loadedMatch = await _context.Matches
+                .OfType<GroupMatch>()
+                .Include(m => m.TeamA)
+                .Include(m => m.TeamB)
+                .Include(m => m.Group)
+                .FirstOrDefaultAsync(m => m.Id == match.Id);
 
-            return CreatedAtAction(nameof(GetMatch), new { id = match.Id }, match);
+            if (loadedMatch == null)
+            {
+                return StatusCode(500, "Created match could not be retrieved");
+            }
+
+            return CreatedAtAction(nameof(GetMatch), new { id = loadedMatch.Id }, loadedMatch);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, $"Failed to create match: {ex.Message}");
+            _logger.LogError(ex, "Error occurred while creating match. TeamA: {TeamAId}, TeamB: {TeamBId}, GroupId: {GroupId}", 
+                request.TeamAId, request.TeamBId, request.GroupId);
+            return StatusCode(500, "An error occurred while creating the match.");
         }
     }
 
@@ -158,11 +172,16 @@ public class MatchesController : ControllerBase
     [HttpPost("knockout")]
     public async Task<ActionResult<Match>> CreateKnockoutMatch(CreateKnockoutMatchRequest request)
     {
+        _logger.LogInformation("Creating knockout match. TeamA: {TeamAId}, TeamB: {TeamBId}, Round: {Round}", 
+            request.TeamAId, request.TeamBId, request.Round);
+
         var teamA = await _context.Teams.FindAsync(request.TeamAId);
         var teamB = await _context.Teams.FindAsync(request.TeamBId);
-        
+
         if (teamA == null || teamB == null)
         {
+            _logger.LogWarning("Invalid team IDs provided for knockout match. TeamA: {TeamAId}, TeamB: {TeamBId}", 
+                request.TeamAId, request.TeamBId);
             return BadRequest("Invalid team IDs");
         }
 
@@ -195,8 +214,12 @@ public class MatchesController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateMatch(int id, Match match)
     {
+        _logger.LogInformation("Updating match {MatchId}. New Score: {ScoreA}-{ScoreB}, Played: {Played}", 
+            id, match.ScoreA, match.ScoreB, match.Played);
+
         if (id != match.Id)
         {
+            _logger.LogWarning("ID mismatch in UpdateMatch. Route ID: {RouteId}, Match ID: {MatchId}", id, match.Id);
             return BadRequest();
         }
 
@@ -212,12 +235,14 @@ public class MatchesController : ControllerBase
                 await UpdateGroupStandings(match);
             }
         }
-        catch (DbUpdateConcurrencyException)
+        catch (DbUpdateConcurrencyException ex)
         {
             if (!MatchExists(id))
             {
+                _logger.LogWarning("Match {MatchId} not found during update", id);
                 return NotFound();
             }
+            _logger.LogError(ex, "Concurrency conflict while updating match {MatchId}", id);
             throw;
         }
 
@@ -228,14 +253,18 @@ public class MatchesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteMatch(int id)
     {
+        _logger.LogInformation("Attempting to delete match {MatchId}", id);
+
         var match = await _context.Matches.FindAsync(id);
         if (match == null)
         {
+            _logger.LogWarning("Match {MatchId} not found for deletion", id);
             return NotFound();
         }
 
         _context.Matches.Remove(match);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("Successfully deleted match {MatchId}", id);
 
         return NoContent();
     }
@@ -247,10 +276,20 @@ public class MatchesController : ControllerBase
 
     private async Task UpdateGroupStandings(Match match)
     {
+        _logger.LogInformation("Updating group standings for match {MatchId}. TeamA: {TeamAId}, TeamB: {TeamBId}, Score: {ScoreA}-{ScoreB}", 
+            match.Id, match.TeamAId, match.TeamBId, match.ScoreA, match.ScoreB);
+
         var teamAStanding = await _context.GroupTeams
             .FirstOrDefaultAsync(gt => gt.GroupId == match.GroupId && gt.TeamId == match.TeamAId);
         var teamBStanding = await _context.GroupTeams
             .FirstOrDefaultAsync(gt => gt.GroupId == match.GroupId && gt.TeamId == match.TeamBId);
+
+        if (teamAStanding == null || teamBStanding == null)
+        {
+            _logger.LogWarning("Could not find group standings for match {MatchId}. TeamA Standing Found: {TeamAFound}, TeamB Standing Found: {TeamBFound}",
+                match.Id, teamAStanding != null, teamBStanding != null);
+            return;
+        }
 
         if (teamAStanding != null && teamBStanding != null)
         {

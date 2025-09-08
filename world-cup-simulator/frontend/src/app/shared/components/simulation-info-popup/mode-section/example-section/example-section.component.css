@@ -1,0 +1,53 @@
+.example-section {
+  margin-bottom: 20px;
+}
+
+.example-section h4 {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  margin-bottom: 12px;
+  margin-top: 0;
+  font-weight: 600;
+}
+
+.example-match {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.teams {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.team-name {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+}
+
+.vs {
+  margin: 0 15px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+.probability,
+.typical-score {
+  text-align: center;
+  margin-bottom: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+}
+
+.probability:last-child,
+.typical-score:last-child {
+  margin-bottom: 0;
+}
+
+.probability strong,
+.typical-score strong {
+  color: rgba(255, 255, 255, 0.95);
+}

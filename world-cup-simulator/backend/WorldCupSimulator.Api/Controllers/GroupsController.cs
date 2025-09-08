@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WorldCupSimulator.Api.Data;
 using WorldCupSimulator.Api.DTOs;
 using WorldCupSimulator.Api.Models;
+using WorldCupSimulator.Api.Services;
 
 namespace WorldCupSimulator.Api.Controllers;
 
@@ -10,170 +9,96 @@ namespace WorldCupSimulator.Api.Controllers;
 [Route("api/[controller]")]
 public class GroupsController : ControllerBase
 {
-    private readonly WorldCupContext _context;
+    private readonly IGroupService _groupService;
 
-    public GroupsController(WorldCupContext context)
+    public GroupsController(IGroupService groupService)
     {
-        _context = context;
+        _groupService = groupService;
     }
 
     // GET: api/groups
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Group>>> GetGroups()
+    public async Task<ActionResult<IEnumerable<GroupResponse>>> GetGroups()
     {
-        return await _context.Groups
-            .Include(g => g.Teams)
-            .Include(g => g.Matches)
-            .ToListAsync();
+        var groups = await _groupService.GetGroupsAsync();
+        return Ok(groups);
     }
 
     // GET: api/groups/5
     [HttpGet("{id}")]
-    public async Task<ActionResult<Group>> GetGroup(int id)
+    public async Task<ActionResult<GroupResponse>> GetGroup(int id)
     {
-        var group = await _context.Groups
-            .Include(g => g.Teams)
-            .Include(g => g.Matches)
-            .FirstOrDefaultAsync(g => g.Id == id);
-
+        var group = await _groupService.GetGroupByIdAsync(id);
         if (group == null)
         {
             return NotFound();
         }
 
-        return group;
+        return Ok(group);
     }
 
     // POST: api/groups
     [HttpPost]
-    public async Task<ActionResult<Group>> CreateGroup(Group group)
+    public async Task<ActionResult<GroupResponse>> CreateGroup(Group group)
     {
-        _context.Groups.Add(group);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetGroup), new { id = group.Id }, group);
+        var createdGroup = await _groupService.CreateGroupAsync(group);
+        return CreatedAtAction(nameof(GetGroup), new { id = createdGroup.Id }, createdGroup);
     }
 
     // POST: api/groups/{groupId}/teams
     [HttpPost("{groupId}/teams")]
     public async Task<ActionResult<List<GroupTeamResponse>>> AddTeamsToGroup(int groupId, [FromBody] AddTeamsToGroupRequest request)
     {
-        var group = await _context.Groups.FindAsync(groupId);
-        if (group == null)
+        try
         {
-            return NotFound($"Group with ID {groupId} not found");
+            var response = await _groupService.AddTeamsToGroupAsync(groupId, request);
+            return CreatedAtAction(nameof(GetGroup), new { id = groupId }, response);
         }
-
-        var teams = await _context.Teams
-            .Where(t => request.TeamIds.Contains(t.Id))
-            .ToListAsync();
-
-        if (teams.Count != request.TeamIds.Count)
+        catch (KeyNotFoundException ex)
         {
-            var foundIds = teams.Select(t => t.Id);
-            var missingIds = request.TeamIds.Where(id => !foundIds.Contains(id));
-            return BadRequest($"Teams not found: {string.Join(", ", missingIds)}");
+            return NotFound(ex.Message);
         }
-
-        // Check if any teams are already in the group
-        var existingTeams = await _context.GroupTeams
-            .Where(gt => gt.GroupId == groupId && request.TeamIds.Contains(gt.TeamId))
-            .Select(gt => gt.TeamId)
-            .ToListAsync();
-
-        if (existingTeams.Any())
+        catch (ArgumentException ex)
         {
-            return BadRequest($"Teams with IDs {string.Join(", ", existingTeams)} are already in this group");
+            return BadRequest(ex.Message);
         }
-
-        var groupTeams = request.TeamIds.Select(teamId => new GroupTeam
+        catch (InvalidOperationException ex)
         {
-            GroupId = groupId,
-            TeamId = teamId,
-            Points = 0,
-            MatchesPlayed = 0,
-            Wins = 0,
-            Draws = 0,
-            Losses = 0,
-            GoalsFor = 0,
-            GoalsAgainst = 0,
-            GoalDifference = 0
-        }).ToList();
-
-        _context.GroupTeams.AddRange(groupTeams);
-        await _context.SaveChangesAsync();
-
-        // Reload with team details and map to response DTO
-        var groupTeamResponses = await _context.GroupTeams
-            .Include(gt => gt.Team)
-            .Where(gt => gt.GroupId == groupId && request.TeamIds.Contains(gt.TeamId))
-            .Select(gt => new GroupTeamResponse
-            {
-                GroupId = gt.GroupId,
-                TeamId = gt.TeamId,
-                TeamName = gt.Team.Name,
-                TeamCountry = gt.Team.Country,
-                TeamCountryCode = gt.Team.CountryCode,
-                TeamElo = gt.Team.Elo,
-                Points = gt.Points,
-                MatchesPlayed = gt.MatchesPlayed,
-                Wins = gt.Wins,
-                Draws = gt.Draws,
-                Losses = gt.Losses,
-                GoalsFor = gt.GoalsFor,
-                GoalsAgainst = gt.GoalsAgainst,
-                GoalDifference = gt.GoalDifference
-            })
-            .ToListAsync();
-
-        return CreatedAtAction(nameof(GetGroup), new { id = groupId }, groupTeamResponses);
+            return BadRequest(ex.Message);
+        }
     }
 
     // PUT: api/groups/5
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateGroup(int id, Group group)
     {
-        if (id != group.Id)
-        {
-            return BadRequest();
-        }
-
-        _context.Entry(group).State = EntityState.Modified;
-
         try
         {
-            await _context.SaveChangesAsync();
+            await _groupService.UpdateGroupAsync(id, group);
+            return NoContent();
         }
-        catch (DbUpdateConcurrencyException)
+        catch (ArgumentException ex)
         {
-            if (!GroupExists(id))
-            {
-                return NotFound();
-            }
-            throw;
+            return BadRequest(ex.Message);
         }
-
-        return NoContent();
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
     }
 
     // DELETE: api/groups/5
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteGroup(int id)
     {
-        var group = await _context.Groups.FindAsync(id);
-        if (group == null)
+        try
         {
-            return NotFound();
+            await _groupService.DeleteGroupAsync(id);
+            return NoContent();
         }
-
-        _context.Groups.Remove(group);
-        await _context.SaveChangesAsync();
-
-        return NoContent();
-    }
-
-    private bool GroupExists(int id)
-    {
-        return _context.Groups.Any(e => e.Id == id);
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
     }
 }

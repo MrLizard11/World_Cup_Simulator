@@ -1,0 +1,142 @@
+import { Injectable } from '@angular/core';
+import { Team } from '../models/team.model';
+import { AVAILABLE_TEAMS, COUNTRY_CODE_MAP, ELO_RATINGS } from './data';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class TeamSelectionService {
+  private selectedTeams: Team[] = [];
+
+  constructor() { 
+    // Check if there are teams in sessionStorage first
+    const storedTeams = sessionStorage.getItem('selectedTeams');
+    if (storedTeams) {
+      try {
+        this.selectedTeams = JSON.parse(storedTeams);
+      } catch (error) {
+        console.error('Error parsing stored teams in service:', error);
+        this.initializeSelectedTeams();
+      }
+    } else {
+      this.initializeSelectedTeams();
+    }
+  }
+
+  private initializeSelectedTeams() {
+    // Take the first 32 teams and convert them to Team objects
+    this.selectedTeams = AVAILABLE_TEAMS.slice(0, 32).map(teamName => ({
+      name: teamName,
+      country: teamName,
+      elo: ELO_RATINGS[teamName] || Math.floor(Math.random() * (2000 - 1500 + 1)) + 1500,
+      countryCode: COUNTRY_CODE_MAP[teamName] || teamName.substring(0, 3).toUpperCase()
+    })); 
+    this.updateSessionStorage();
+  }
+
+  private updateSessionStorage(): void {
+    try {
+      sessionStorage.setItem('selectedTeams', JSON.stringify(this.selectedTeams));
+    } catch (error) {
+      console.error('Failed to save teams to sessionStorage:', error);
+    }
+  }
+
+  getSelectedTeams(): Team[] {
+    return [...this.selectedTeams];
+  }
+
+  // Get teams organized by seeding pots 
+  getSeededPots(): { pot1: Team[], pot2: Team[], pot3: Team[], pot4: Team[] } {
+    const sortedTeams = [...this.selectedTeams].sort((a, b) => b.elo - a.elo);
+    
+    return {
+      pot1: sortedTeams.slice(0, 8),   // Top 8 teams (highest Elo)
+      pot2: sortedTeams.slice(8, 16),  // Teams 9-16
+      pot3: sortedTeams.slice(16, 24), // Teams 17-24
+      pot4: sortedTeams.slice(24, 32)  // Bottom 8 teams (lowest Elo)
+    };
+  }
+
+  getAvailableTeams(): string[] {
+    return [...AVAILABLE_TEAMS];
+  }
+
+  getSortedSelectedTeams(): Team[] {
+    return [...this.selectedTeams].sort((a, b) => b.elo - a.elo);
+  }
+
+  addTeam(team: Team): boolean {
+    if (this.selectedTeams.length < 32) {
+      this.selectedTeams.push(team);
+      this.updateSessionStorage();
+      return true;
+    }
+    return false;
+  }
+
+  addPreDefinedTeam(teamName: string): { success: boolean; message?: string } {
+    if (!teamName) {
+      return { success: false, message: 'No team selected' };
+    }
+
+    if (this.selectedTeams.length >= 32) {
+      return { success: false, message: 'Maximum 32 teams allowed!' };
+    }
+
+    // Check if team already exists
+    const existingTeam = this.selectedTeams.find(team => 
+      team.name === teamName || team.country === teamName
+    );
+    
+    if (existingTeam) {
+      return { success: false, message: 'Team already selected!' };
+    }
+
+    // Create a team object with proper data
+    const newTeam: Team = {
+      name: teamName,
+      country: teamName,
+      elo: ELO_RATINGS[teamName] || Math.floor(Math.random() * (2000 - 1500 + 1)) + 1500,
+      countryCode: COUNTRY_CODE_MAP[teamName] || teamName.substring(0, 3).toUpperCase()
+    };
+    
+    this.selectedTeams.push(newTeam);
+    this.updateSessionStorage();
+    return { success: true };
+  }
+
+  removeTeam(index: number): void {
+    if (index >= 0 && index < this.selectedTeams.length) {
+      this.selectedTeams.splice(index, 1);
+      this.updateSessionStorage();
+    }
+  }
+
+  getSelectedTeamsCount(): number {
+    return this.selectedTeams.length;
+  }
+
+  canStartTournament(): boolean {
+    return this.selectedTeams.length === 32;
+  }
+
+  prepareForTournament(): Team[] {
+    if (this.canStartTournament()) {
+      return [...this.selectedTeams];
+    }
+    return [];
+  }
+
+  clearSessionStorage(): void {
+    try {
+      sessionStorage.removeItem('selectedTeams');
+    } catch (error) {
+      console.error('Failed to clear teams from sessionStorage:', error);
+    }
+  }
+
+  resetToDefault(): void {
+    this.initializeSelectedTeams();
+  }
+}
