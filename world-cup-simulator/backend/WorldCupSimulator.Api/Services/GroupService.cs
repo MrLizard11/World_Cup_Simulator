@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using WorldCupSimulator.Api.Common;
 using WorldCupSimulator.Api.Data;
 using WorldCupSimulator.Api.DTOs;
+using WorldCupSimulator.Api.Errors;
 using WorldCupSimulator.Api.Models;
 
 namespace WorldCupSimulator.Api.Services
@@ -14,7 +16,7 @@ namespace WorldCupSimulator.Api.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<GroupResponse>> GetGroupsAsync()
+        public async Task<Result<IEnumerable<GroupResponse>>> GetGroupsAsync()
         {
             var groups = await _context.Groups
                 .Include(g => g.Teams)
@@ -22,10 +24,11 @@ namespace WorldCupSimulator.Api.Services
                 .Include(g => g.Matches)
                 .ToListAsync();
 
-            return groups.Select(g => MapToGroupResponse(g));
+            var response = groups.Select(g => MapToGroupResponse(g));
+            return Result.Success<IEnumerable<GroupResponse>>(response);
         }
 
-        public async Task<GroupResponse?> GetGroupByIdAsync(int id)
+        public async Task<Result<GroupResponse>> GetGroupByIdAsync(int id)
         {
             var group = await _context.Groups
                 .Include(g => g.Teams)
@@ -33,22 +36,32 @@ namespace WorldCupSimulator.Api.Services
                 .Include(g => g.Matches)
                 .FirstOrDefaultAsync(g => g.Id == id);
 
-            return group == null ? null : MapToGroupResponse(group);
+            if (group == null)
+            {
+                return Result.Failure<GroupResponse>(GroupErrors.NotFound(id));
+            }
+
+            return Result.Success(MapToGroupResponse(group));
         }
 
-        public async Task<GroupResponse> CreateGroupAsync(Group group)
+        public async Task<Result<GroupResponse>> CreateGroupAsync(Group group)
         {
+            if (string.IsNullOrWhiteSpace(group.Name))
+            {
+                return Result.Failure<GroupResponse>(GroupErrors.InvalidName);
+            }
+
             _context.Groups.Add(group);
             await _context.SaveChangesAsync();
-            return MapToGroupResponse(group);
+            return Result.Success(MapToGroupResponse(group));
         }
 
-        public async Task<List<GroupTeamResponse>> AddTeamsToGroupAsync(int groupId, AddTeamsToGroupRequest request)
+        public async Task<Result<List<GroupTeamResponse>>> AddTeamsToGroupAsync(int groupId, AddTeamsToGroupRequest request)
         {
             var group = await _context.Groups.FindAsync(groupId);
             if (group == null)
             {
-                throw new KeyNotFoundException($"Group with ID {groupId} not found");
+                return Result.Failure<List<GroupTeamResponse>>(GroupErrors.NotFound(groupId));
             }
 
             var teams = await _context.Teams
@@ -59,7 +72,7 @@ namespace WorldCupSimulator.Api.Services
             {
                 var foundIds = teams.Select(t => t.Id);
                 var missingIds = request.TeamIds.Where(id => !foundIds.Contains(id));
-                throw new ArgumentException($"Teams not found: {string.Join(", ", missingIds)}");
+                return Result.Failure<List<GroupTeamResponse>>(GroupErrors.TeamsNotFound(missingIds));
             }
 
             var existingTeams = await _context.GroupTeams
@@ -69,8 +82,7 @@ namespace WorldCupSimulator.Api.Services
 
             if (existingTeams.Any())
             {
-                throw new InvalidOperationException(
-                    $"Teams with IDs {string.Join(", ", existingTeams)} are already in this group");
+                return Result.Failure<List<GroupTeamResponse>>(GroupErrors.TeamsAlreadyInGroup(existingTeams));
             }
 
             var groupTeams = request.TeamIds.Select(teamId => new GroupTeam
@@ -112,14 +124,24 @@ namespace WorldCupSimulator.Api.Services
                 })
                 .ToListAsync();
 
-            return groupTeamResponses;
+            return Result.Success(groupTeamResponses);
         }
 
-        public async Task UpdateGroupAsync(int id, Group group)
+        public async Task<Result> UpdateGroupAsync(int id, Group group)
         {
             if (id != group.Id)
             {
-                throw new ArgumentException("ID mismatch");
+                return Result.Failure(new Error("Groups.IdMismatch", "ID mismatch"));
+            }
+
+            if (string.IsNullOrWhiteSpace(group.Name))
+            {
+                return Result.Failure(GroupErrors.InvalidName);
+            }
+
+            if (!await GroupExistsAsync(id))
+            {
+                return Result.Failure(GroupErrors.NotFound(id));
             }
 
             _context.Entry(group).State = EntityState.Modified;
@@ -127,27 +149,30 @@ namespace WorldCupSimulator.Api.Services
             try
             {
                 await _context.SaveChangesAsync();
+                return Result.Success();
             }
             catch (DbUpdateConcurrencyException)
             {
+                // Re-check if the group still exists after concurrency exception
                 if (!await GroupExistsAsync(id))
                 {
-                    throw new KeyNotFoundException($"Group with ID {id} not found");
+                    return Result.Failure(GroupErrors.NotFound(id));
                 }
-                throw;
+                return Result.Failure(new Error("Groups.ConcurrencyError", "A concurrency error occurred while updating the group"));
             }
         }
 
-        public async Task DeleteGroupAsync(int id)
+        public async Task<Result> DeleteGroupAsync(int id)
         {
             var group = await _context.Groups.FindAsync(id);
             if (group == null)
             {
-                throw new KeyNotFoundException($"Group with ID {id} not found");
+                return Result.Failure(GroupErrors.NotFound(id));
             }
 
             _context.Groups.Remove(group);
             await _context.SaveChangesAsync();
+            return Result.Success();
         }
 
         private async Task<bool> GroupExistsAsync(int id)
