@@ -31,6 +31,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<IGroupService, GroupService>();
         services.AddScoped<ITeamService, TeamService>();
+        services.AddScoped<IMatchService, MatchService>();
 
         return services;
     }
