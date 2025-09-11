@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using WorldCupSimulator.Api.Common;
 using WorldCupSimulator.Api.Data;
 using WorldCupSimulator.Api.DTOs;
+using WorldCupSimulator.Api.Errors;
 using WorldCupSimulator.Api.Models;
 
 namespace WorldCupSimulator.Api.Services
@@ -14,20 +16,36 @@ namespace WorldCupSimulator.Api.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<TeamResponse>> GetTeamsAsync()
+        public async Task<Result<IEnumerable<TeamResponse>>> GetTeamsAsync()
         {
             var teams = await _context.Teams.ToListAsync();
-            return teams.Select(MapToTeamResponse);
+            var response = teams.Select(MapToTeamResponse);
+            return Result.Success<IEnumerable<TeamResponse>>(response);
         }
 
-        public async Task<TeamResponse?> GetTeamByIdAsync(int id)
+        public async Task<Result<TeamResponse>> GetTeamByIdAsync(int id)
         {
             var team = await _context.Teams.FindAsync(id);
-            return team == null ? null : MapToTeamResponse(team);
+            if (team == null)
+            {
+                return Result.Failure<TeamResponse>(TeamErrors.NotFound(id));
+            }
+            return Result.Success(MapToTeamResponse(team));
         }
 
-        public async Task<TeamResponse> CreateTeamAsync(CreateTeamRequest request)
+        public async Task<Result<TeamResponse>> CreateTeamAsync(CreateTeamRequest request)
         {
+            if (string.IsNullOrWhiteSpace(request.Name))
+            {
+                return Result.Failure<TeamResponse>(TeamErrors.InvalidName);
+            }
+
+            var existingTeam = await _context.Teams.FirstOrDefaultAsync(t => t.Name == request.Name);
+            if (existingTeam != null)
+            {
+                return Result.Failure<TeamResponse>(TeamErrors.DuplicateName);
+            }
+
             var team = new Team
             {
                 Name = request.Name,
@@ -39,18 +57,28 @@ namespace WorldCupSimulator.Api.Services
             _context.Teams.Add(team);
             await _context.SaveChangesAsync();
 
-            return MapToTeamResponse(team);
+            return Result.Success(MapToTeamResponse(team));
         }
 
-        public async Task<TeamResponse> UpdateTeamAsync(int id, UpdateTeamRequest request)
+        public async Task<Result<TeamResponse>> UpdateTeamAsync(int id, UpdateTeamRequest request)
         {
+            if (string.IsNullOrWhiteSpace(request.Name))
+            {
+                return Result.Failure<TeamResponse>(TeamErrors.InvalidName);
+            }
+
             var team = await _context.Teams.FindAsync(id);
             if (team == null)
             {
-                throw new KeyNotFoundException($"Team with ID {id} not found");
+                return Result.Failure<TeamResponse>(TeamErrors.NotFound(id));
             }
 
-            // Only update the allowed fields
+            var existingTeam = await _context.Teams.FirstOrDefaultAsync(t => t.Name == request.Name && t.Id != id);
+            if (existingTeam != null)
+            {
+                return Result.Failure<TeamResponse>(TeamErrors.DuplicateName);
+            }
+
             team.Name = request.Name;
             team.Country = request.Country;
             team.Elo = request.Elo;
@@ -58,19 +86,20 @@ namespace WorldCupSimulator.Api.Services
 
             await _context.SaveChangesAsync();
 
-            return MapToTeamResponse(team);
+            return Result.Success(MapToTeamResponse(team));
         }
 
-        public async Task DeleteTeamAsync(int id)
+        public async Task<Result> DeleteTeamAsync(int id)
         {
             var team = await _context.Teams.FindAsync(id);
             if (team == null)
             {
-                throw new KeyNotFoundException($"Team with ID {id} not found");
+                return Result.Failure(TeamErrors.NotFound(id));
             }
 
             _context.Teams.Remove(team);
             await _context.SaveChangesAsync();
+            return Result.Success();
         }
 
         private static TeamResponse MapToTeamResponse(Team team)
