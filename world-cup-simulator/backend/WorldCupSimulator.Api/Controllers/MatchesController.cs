@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using WorldCupSimulator.Api.Data;
+using WorldCupSimulator.Api.Common;
 using WorldCupSimulator.Api.DTOs;
 using WorldCupSimulator.Api.Models;
+using WorldCupSimulator.Api.Services;
 
 namespace WorldCupSimulator.Api.Controllers;
 
@@ -11,12 +11,12 @@ namespace WorldCupSimulator.Api.Controllers;
 [Route("api/[controller]")]
 public class MatchesController : ControllerBase
 {
-    private readonly WorldCupContext _context;
+    private readonly IMatchService _matchService;
     private readonly ILogger<MatchesController> _logger;
 
-    public MatchesController(WorldCupContext context, ILogger<MatchesController> logger)
+    public MatchesController(IMatchService matchService, ILogger<MatchesController> logger)
     {
-        _context = context;
+        _matchService = matchService;
         _logger = logger;
     }
 
@@ -24,311 +24,77 @@ public class MatchesController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Match>>> GetMatches()
     {
-        if (!_context.Matches.Any())
-        {
-            return new List<Match>();
-        }
-
-        var matches = await _context.Matches
-            .Include(m => m.TeamA)
-            .Include(m => m.TeamB)
-            .Include(m => m.Group)
-            .ToListAsync();
-
-        return matches;
+        var result = await _matchService.GetMatchesAsync();
+        return result.Match<ActionResult<IEnumerable<Match>>, IEnumerable<Match>>(
+            onSuccess: matches => Ok(matches),
+            onFailure: error => BadRequest(error));
     }
 
     // GET: api/matches/5
     [HttpGet("{id}")]
     public async Task<ActionResult<Match>> GetMatch(int id)
     {
-        var match = await _context.Matches
-            .Include(m => m.TeamA)
-            .Include(m => m.TeamB)
-            .Include(m => m.Group)
-            .FirstOrDefaultAsync(m => m.Id == id);
-
-        if (match == null)
-        {
-            return NotFound();
-        }
-
-        return match;
+        var result = await _matchService.GetMatchByIdAsync(id);
+        return result.Match<ActionResult<Match>, Match>(
+            onSuccess: match => Ok(match),
+            onFailure: error => error.Code.Contains("NotFound") 
+                ? NotFound(error.Description) 
+                : BadRequest(error));
     }
 
     // GET: api/matches/knockout
     [HttpGet("knockout")]
     public async Task<ActionResult<IEnumerable<KnockoutMatch>>> GetKnockoutMatches()
     {
-        var matches = await _context.Matches
-            .OfType<KnockoutMatch>()
-            .Include(m => m.TeamA)
-            .Include(m => m.TeamB)
-            .ToListAsync();
-
-        return matches;
+        var result = await _matchService.GetKnockoutMatchesAsync();
+        return result.Match<ActionResult<IEnumerable<KnockoutMatch>>, IEnumerable<KnockoutMatch>>(
+            onSuccess: matches => Ok(matches),
+            onFailure: error => BadRequest(error));
     }
 
     // GET: api/matches/group/5
     [HttpGet("group/{groupId}")]
     public async Task<ActionResult<IEnumerable<Match>>> GetMatchesByGroup(int groupId)
     {
-        if (!_context.Matches.Any(m => m.GroupId == groupId))
-        {
-            return new List<Match>();
-        }
-
-        return await _context.Matches
-            .Include(m => m.TeamA)
-            .Include(m => m.TeamB)
-            .Where(m => m.GroupId == groupId)
-            .ToListAsync();
+        var result = await _matchService.GetMatchesByGroupAsync(groupId);
+        return result.Match<ActionResult<IEnumerable<Match>>, IEnumerable<Match>>(
+            onSuccess: matches => Ok(matches),
+            onFailure: error => BadRequest(error));
     }
 
     // POST: api/matches
     [HttpPost]
     public async Task<ActionResult<Match>> CreateMatch(CreateMatchRequest request)
     {
-        try
-        {
-            var teamA = await _context.Teams.FindAsync(request.TeamAId);
-            var teamB = await _context.Teams.FindAsync(request.TeamBId);
-
-            if (teamA == null)
-            {
-                return BadRequest($"Team A with ID {request.TeamAId} not found");
-            }
-
-            if (teamB == null)
-            {
-                return BadRequest($"Team B with ID {request.TeamBId} not found");
-            }
-
-            if (request.GroupId.HasValue)
-            {
-                var group = await _context.Groups.FindAsync(request.GroupId.Value);
-                if (group == null)
-                {
-                    return BadRequest($"Group with ID {request.GroupId.Value} not found");
-                }
-
-                // Verify both teams are in the group
-                var groupTeams = await _context.GroupTeams
-                    .Where(gt => gt.GroupId == request.GroupId.Value)
-                    .Select(gt => gt.TeamId)
-                    .ToListAsync();
-
-                if (!groupTeams.Contains(request.TeamAId))
-                {
-                    return BadRequest($"Team A (ID: {request.TeamAId}) is not in the group");
-                }
-
-                if (!groupTeams.Contains(request.TeamBId))
-                {
-                    return BadRequest($"Team B (ID: {request.TeamBId}) is not in the group");
-                }
-            }
-
-            var match = new GroupMatch
-            {
-                TeamAId = request.TeamAId,
-                TeamBId = request.TeamBId,
-                GroupId = request.GroupId,
-                ScoreA = request.ScoreA,
-                ScoreB = request.ScoreB,
-                Played = request.Played,
-                MatchType = "Group"  // Explicitly set the discriminator
-            };
-
-            _context.Matches.Add(match);
-            await _context.SaveChangesAsync();
-
-            await _context.Entry(match).ReloadAsync();
-
-            // Explicitly load related entities
-            var loadedMatch = await _context.Matches
-                .OfType<GroupMatch>()
-                .Include(m => m.TeamA)
-                .Include(m => m.TeamB)
-                .Include(m => m.Group)
-                .FirstOrDefaultAsync(m => m.Id == match.Id);
-
-            if (loadedMatch == null)
-            {
-                return StatusCode(500, "Created match could not be retrieved");
-            }
-
-            return CreatedAtAction(nameof(GetMatch), new { id = loadedMatch.Id }, loadedMatch);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error occurred while creating match. TeamA: {TeamAId}, TeamB: {TeamBId}, GroupId: {GroupId}", 
-                request.TeamAId, request.TeamBId, request.GroupId);
-            return StatusCode(500, "An error occurred while creating the match.");
-        }
+        var result = await _matchService.CreateMatchAsync(request);
+        return result.Match<ActionResult<Match>, Match>(
+            onSuccess: match => CreatedAtAction(nameof(GetMatch), new { id = match.Id }, match),
+            onFailure: error => error.Code.Contains("NotFound") 
+                ? NotFound(error.Description) 
+                : BadRequest(error));
     }
 
     // POST: api/matches/knockout
     [HttpPost("knockout")]
-    public async Task<ActionResult<Match>> CreateKnockoutMatch(CreateKnockoutMatchRequest request)
+    public async Task<ActionResult<KnockoutMatch>> CreateKnockoutMatch(CreateKnockoutMatchRequest request)
     {
-        _logger.LogInformation("Creating knockout match. TeamA: {TeamAId}, TeamB: {TeamBId}, Round: {Round}", 
-            request.TeamAId, request.TeamBId, request.Round);
-
-        var teamA = await _context.Teams.FindAsync(request.TeamAId);
-        var teamB = await _context.Teams.FindAsync(request.TeamBId);
-
-        if (teamA == null || teamB == null)
-        {
-            _logger.LogWarning("Invalid team IDs provided for knockout match. TeamA: {TeamAId}, TeamB: {TeamBId}", 
-                request.TeamAId, request.TeamBId);
-            return BadRequest("Invalid team IDs");
-        }
-
-        var match = new KnockoutMatch
-        {
-            TeamAId = request.TeamAId,
-            TeamBId = request.TeamBId,
-            ScoreA = request.ScoreA,
-            ScoreB = request.ScoreB,
-            Played = request.Played,
-            Round = Enum.Parse<KnockoutRound>(request.Round),
-            WentToPenalties = request.WentToPenalties,
-            PenaltyScoreA = request.PenaltyScoreA,
-            PenaltyScoreB = request.PenaltyScoreB
-        };
-
-        _context.Matches.Add(match);
-        await _context.SaveChangesAsync();
-
-        // Reload the match with navigation properties
-        var createdMatch = await _context.Matches
-            .Include(m => m.TeamA)
-            .Include(m => m.TeamB)
-            .FirstOrDefaultAsync(m => m.Id == match.Id);
-
-        return CreatedAtAction(nameof(GetMatch), new { id = match.Id }, createdMatch);
-    }
-
-    // PUT: api/matches/5
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateMatch(int id, Match match)
-    {
-        _logger.LogInformation("Updating match {MatchId}. New Score: {ScoreA}-{ScoreB}, Played: {Played}", 
-            id, match.ScoreA, match.ScoreB, match.Played);
-
-        if (id != match.Id)
-        {
-            _logger.LogWarning("ID mismatch in UpdateMatch. Route ID: {RouteId}, Match ID: {MatchId}", id, match.Id);
-            return BadRequest();
-        }
-
-        _context.Entry(match).State = EntityState.Modified;
-
-        try
-        {
-            await _context.SaveChangesAsync();
-
-            // If match is completed, update group standings
-            if (match.Played && match.GroupId.HasValue)
-            {
-                await UpdateGroupStandings(match);
-            }
-        }
-        catch (DbUpdateConcurrencyException ex)
-        {
-            if (!MatchExists(id))
-            {
-                _logger.LogWarning("Match {MatchId} not found during update", id);
-                return NotFound();
-            }
-            _logger.LogError(ex, "Concurrency conflict while updating match {MatchId}", id);
-            throw;
-        }
-
-        return NoContent();
+        var result = await _matchService.CreateKnockoutMatchAsync(request);
+        return result.Match<ActionResult<KnockoutMatch>, KnockoutMatch>(
+            onSuccess: match => CreatedAtAction(nameof(GetMatch), new { id = match.Id }, match),
+            onFailure: error => error.Code.Contains("NotFound") 
+                ? NotFound(error.Description) 
+                : BadRequest(error));
     }
 
     // DELETE: api/matches/5
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteMatch(int id)
     {
-        _logger.LogInformation("Attempting to delete match {MatchId}", id);
-
-        var match = await _context.Matches.FindAsync(id);
-        if (match == null)
-        {
-            _logger.LogWarning("Match {MatchId} not found for deletion", id);
-            return NotFound();
-        }
-
-        _context.Matches.Remove(match);
-        await _context.SaveChangesAsync();
-        _logger.LogInformation("Successfully deleted match {MatchId}", id);
-
-        return NoContent();
-    }
-
-    private bool MatchExists(int id)
-    {
-        return _context.Matches.Any(e => e.Id == id);
-    }
-
-    private async Task UpdateGroupStandings(Match match)
-    {
-        _logger.LogInformation("Updating group standings for match {MatchId}. TeamA: {TeamAId}, TeamB: {TeamBId}, Score: {ScoreA}-{ScoreB}", 
-            match.Id, match.TeamAId, match.TeamBId, match.ScoreA, match.ScoreB);
-
-        var teamAStanding = await _context.GroupTeams
-            .FirstOrDefaultAsync(gt => gt.GroupId == match.GroupId && gt.TeamId == match.TeamAId);
-        var teamBStanding = await _context.GroupTeams
-            .FirstOrDefaultAsync(gt => gt.GroupId == match.GroupId && gt.TeamId == match.TeamBId);
-
-        if (teamAStanding == null || teamBStanding == null)
-        {
-            _logger.LogWarning("Could not find group standings for match {MatchId}. TeamA Standing Found: {TeamAFound}, TeamB Standing Found: {TeamBFound}",
-                match.Id, teamAStanding != null, teamBStanding != null);
-            return;
-        }
-
-        if (teamAStanding != null && teamBStanding != null)
-        {
-            // Update matches played
-            teamAStanding.MatchesPlayed++;
-            teamBStanding.MatchesPlayed++;
-
-            // Update goals
-            teamAStanding.GoalsFor += match.ScoreA;
-            teamAStanding.GoalsAgainst += match.ScoreB;
-            teamBStanding.GoalsFor += match.ScoreB;
-            teamBStanding.GoalsAgainst += match.ScoreA;
-
-            // Update goal difference
-            teamAStanding.GoalDifference = teamAStanding.GoalsFor - teamAStanding.GoalsAgainst;
-            teamBStanding.GoalDifference = teamBStanding.GoalsFor - teamBStanding.GoalsAgainst;
-
-            // Update points and win/draw/loss records
-            if (match.ScoreA > match.ScoreB)
-            {
-                teamAStanding.Points += 3;
-                teamAStanding.Wins++;
-                teamBStanding.Losses++;
-            }
-            else if (match.ScoreA < match.ScoreB)
-            {
-                teamBStanding.Points += 3;
-                teamBStanding.Wins++;
-                teamAStanding.Losses++;
-            }
-            else
-            {
-                teamAStanding.Points++;
-                teamBStanding.Points++;
-                teamAStanding.Draws++;
-                teamBStanding.Draws++;
-            }
-
-            await _context.SaveChangesAsync();
-        }
+        var result = await _matchService.DeleteMatchAsync(id);
+        return result.Match<IActionResult>(
+            onSuccess: () => NoContent(),
+            onFailure: error => error.Code.Contains("NotFound") 
+                ? NotFound(error.Description) 
+                : BadRequest(error));
     }
 }
