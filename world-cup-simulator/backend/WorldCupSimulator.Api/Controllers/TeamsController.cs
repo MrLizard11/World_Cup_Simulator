@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using WorldCupSimulator.Api.Common;
 using WorldCupSimulator.Api.DTOs;
 using WorldCupSimulator.Api.Services;
 
@@ -22,83 +23,58 @@ public class TeamsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<TeamResponse>>> GetTeams()
     {
-        var teams = await _teamService.GetTeamsAsync();
-        return Ok(teams);
+        var result = await _teamService.GetTeamsAsync();
+        return result.Match<ActionResult<IEnumerable<TeamResponse>>, IEnumerable<TeamResponse>>(
+            onSuccess: teams => Ok(teams),
+            onFailure: error => BadRequest(error));
     }
 
     // GET: api/teams/5
     [HttpGet("{id}")]
     public async Task<ActionResult<TeamResponse>> GetTeam(int id)
     {
-        var team = await _teamService.GetTeamByIdAsync(id);
-        
-        if (team == null)
-        {
-            _logger.LogWarning("Team with ID {TeamId} not found", id);
-            return NotFound();
-        }
-
-        return Ok(team);
+        var result = await _teamService.GetTeamByIdAsync(id);
+        return result.Match<ActionResult<TeamResponse>, TeamResponse>(
+            onSuccess: team => Ok(team),
+            onFailure: error => error.Code.Contains("NotFound") 
+                ? NotFound(error.Description) 
+                : BadRequest(error));
     }
 
     // POST: api/teams
     [HttpPost]
     public async Task<ActionResult<TeamResponse>> CreateTeam(CreateTeamRequest request)
     {
-        try
-        {
-            _logger.LogInformation("Creating new team: {TeamName}", request.Name);
-            var team = await _teamService.CreateTeamAsync(request);
-            return CreatedAtAction(nameof(GetTeam), new { id = team.Id }, team);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating team: {TeamName}", request.Name);
-            return StatusCode(500, "An error occurred while creating the team");
-        }
+        _logger.LogInformation("Creating new team: {TeamName}", request.Name);
+        var result = await _teamService.CreateTeamAsync(request);
+        return result.Match<ActionResult<TeamResponse>, TeamResponse>(
+            onSuccess: team => CreatedAtAction(nameof(GetTeam), new { id = team.Id }, team),
+            onFailure: error => BadRequest(error));
     }
 
     // PUT: api/teams/5
     [HttpPut("{id}")]
     public async Task<ActionResult<TeamResponse>> UpdateTeam(int id, UpdateTeamRequest request)
     {
-        try
-        {
-            _logger.LogInformation("Updating team {TeamId}", id);
-            var team = await _teamService.UpdateTeamAsync(id, request);
-            return Ok(team);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            _logger.LogWarning(ex, "Team {TeamId} not found for update", id);
-            return NotFound(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating team {TeamId}", id);
-            return StatusCode(500, "An error occurred while updating the team");
-        }
+        _logger.LogInformation("Updating team {TeamId}", id);
+        var result = await _teamService.UpdateTeamAsync(id, request);
+        return result.Match<ActionResult<TeamResponse>, TeamResponse>(
+            onSuccess: team => Ok(team),
+            onFailure: error => error.Code.Contains("NotFound") 
+                ? NotFound(error.Description) 
+                : BadRequest(error));
     }
 
     // DELETE: api/teams/5
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteTeam(int id)
     {
-        try
-        {
-            _logger.LogInformation("Deleting team {TeamId}", id);
-            await _teamService.DeleteTeamAsync(id);
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex)
-        {
-            _logger.LogWarning(ex, "Team {TeamId} not found for deletion", id);
-            return NotFound(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting team {TeamId}", id);
-            return StatusCode(500, "An error occurred while deleting the team");
-        }
+        _logger.LogInformation("Deleting team {TeamId}", id);
+        var result = await _teamService.DeleteTeamAsync(id);
+        return result.Match<IActionResult>(
+            onSuccess: () => NoContent(),
+            onFailure: error => error.Code.Contains("NotFound") 
+                ? NotFound(error.Description) 
+                : BadRequest(error));
     }
 }
