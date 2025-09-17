@@ -13,5 +13,12 @@ namespace WorldCupSimulator.Api.Services
         Task<Result<Match>> CreateMatchAsync(CreateMatchRequest request);
         Task<Result<KnockoutMatch>> CreateKnockoutMatchAsync(CreateKnockoutMatchRequest request);
         Task<Result> DeleteMatchAsync(int id);
+        Task<Result<IEnumerable<Match>>> GenerateGroupMatchesAsync(int groupId);
+        
+        // Simulation methods
+        Task<Result<Match>> SimulateMatchAsync(int matchId, SimulationMode mode = SimulationMode.EloRealistic);
+        Task<Result<IEnumerable<Match>>> SimulateAllGroupMatchesAsync(int groupId, SimulationMode mode = SimulationMode.EloRealistic);
+        Task<Result<IEnumerable<Match>>> SimulateAllGroupStageAsync(SimulationMode mode = SimulationMode.EloRealistic);
+        Task<Result<KnockoutMatch>> SimulateKnockoutMatchAsync(int matchId, SimulationMode mode = SimulationMode.EloRealistic);
     }
 }
