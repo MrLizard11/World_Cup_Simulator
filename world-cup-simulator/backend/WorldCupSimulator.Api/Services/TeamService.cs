@@ -99,6 +99,14 @@ namespace WorldCupSimulator.Api.Services
 
             _context.Teams.Remove(team);
             await _context.SaveChangesAsync();
+
+            // Reset identity counter if no teams remain
+            var remainingTeamsCount = await _context.Teams.CountAsync();
+            if (remainingTeamsCount == 0)
+            {
+                await _context.Database.ExecuteSqlRawAsync("DBCC CHECKIDENT ('Teams', RESEED, 0)");
+            }
+
             return Result.Success();
         }
 
