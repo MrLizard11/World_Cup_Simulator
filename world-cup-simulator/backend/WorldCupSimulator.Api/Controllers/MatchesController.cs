@@ -97,4 +97,69 @@ public class MatchesController : ControllerBase
                 ? NotFound(error.Description) 
                 : BadRequest(error));
     }
+
+    // POST: api/matches/5/simulate
+    [HttpPost("{id}/simulate")]
+    public async Task<ActionResult<Match>> SimulateMatch(int id, [FromQuery] SimulationMode mode = SimulationMode.EloRealistic)
+    {
+        var result = await _matchService.SimulateMatchAsync(id, mode);
+        return result.Match<ActionResult<Match>, Match>(
+            onSuccess: match => Ok(match),
+            onFailure: error => error.Code.Contains("NotFound") 
+                ? NotFound(error.Description) 
+                : BadRequest(error));
+    }
+
+    // POST: api/matches/simulate-group/5
+    [HttpPost("simulate-group/{groupId}")]
+    public async Task<ActionResult<IEnumerable<Match>>> SimulateGroupMatches(int groupId, [FromQuery] SimulationMode mode = SimulationMode.EloRealistic)
+    {
+        var result = await _matchService.SimulateAllGroupMatchesAsync(groupId, mode);
+        return result.Match<ActionResult<IEnumerable<Match>>, IEnumerable<Match>>(
+            onSuccess: matches => Ok(matches),
+            onFailure: error => BadRequest(error));
+    }
+
+    // POST: api/matches/simulate/group 
+    [HttpPost("simulate/group")]
+    public async Task<ActionResult<IEnumerable<Match>>> SimulateGroupMatchesAlt([FromBody] SimulateGroupMatchesRequest request)
+    {
+        var mode = Enum.Parse<SimulationMode>(request.SimulationMode, true);
+        var result = await _matchService.SimulateAllGroupMatchesAsync(request.GroupId, mode);
+        return result.Match<ActionResult<IEnumerable<Match>>, IEnumerable<Match>>(
+            onSuccess: matches => Ok(matches),
+            onFailure: error => BadRequest(error));
+    }
+
+    // POST: api/matches/simulate-all-groups
+    [HttpPost("simulate-all-groups")]
+    public async Task<ActionResult<IEnumerable<Match>>> SimulateAllGroups([FromQuery] SimulationMode mode = SimulationMode.EloRealistic)
+    {
+        var result = await _matchService.SimulateAllGroupStageAsync(mode);
+        return result.Match<ActionResult<IEnumerable<Match>>, IEnumerable<Match>>(
+            onSuccess: matches => Ok(matches),
+            onFailure: error => BadRequest(error));
+    }
+
+    // POST: api/matches/knockout/5/simulate
+    [HttpPost("knockout/{id}/simulate")]
+    public async Task<ActionResult<KnockoutMatch>> SimulateKnockoutMatch(int id, [FromQuery] SimulationMode mode = SimulationMode.EloRealistic)
+    {
+        var result = await _matchService.SimulateKnockoutMatchAsync(id, mode);
+        return result.Match<ActionResult<KnockoutMatch>, KnockoutMatch>(
+            onSuccess: match => Ok(match),
+            onFailure: error => error.Code.Contains("NotFound") 
+                ? NotFound(error.Description) 
+                : BadRequest(error));
+    }
+
+    // POST: api/matches/generate/group
+    [HttpPost("generate/group")]
+    public async Task<ActionResult<IEnumerable<Match>>> GenerateGroupMatches([FromBody] GenerateGroupMatchesRequest request)
+    {
+        var result = await _matchService.GenerateGroupMatchesAsync(request.GroupId);
+        return result.Match<ActionResult<IEnumerable<Match>>, IEnumerable<Match>>(
+            onSuccess: matches => Ok(matches),
+            onFailure: error => BadRequest(error));
+    }
 }
