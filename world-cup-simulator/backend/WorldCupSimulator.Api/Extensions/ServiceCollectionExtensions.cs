@@ -1,8 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 using WorldCupSimulator.Api.Data;
 using WorldCupSimulator.Api.Services;
+
+[assembly: InternalsVisibleTo("WorldCupSimulator.Tests")]
 
 namespace WorldCupSimulator.Api.Extensions;
 
@@ -33,6 +36,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITeamService, TeamService>();
         services.AddScoped<IMatchService, MatchService>();
         services.AddScoped<ISimulationService, SimulationService>();
+        services.AddScoped<ITournamentService, TournamentService>();
 
         return services;
     }

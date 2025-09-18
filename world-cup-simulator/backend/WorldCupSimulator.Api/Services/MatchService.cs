@@ -200,14 +200,6 @@ namespace WorldCupSimulator.Api.Services
 
             _context.Matches.Remove(match);
             await _context.SaveChangesAsync();
-
-            // Reset identity counter if no matches remain
-            var remainingMatchesCount = await _context.Matches.CountAsync();
-            if (remainingMatchesCount == 0)
-            {
-                await _context.Database.ExecuteSqlRawAsync("DBCC CHECKIDENT ('Matches', RESEED, 0)");
-            }
-
             return Result.Success();
         }
 
