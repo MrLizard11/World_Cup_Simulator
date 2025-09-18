@@ -64,8 +64,8 @@ artifacts/
 *.ndf
 
 # Local development settings
-appsettings.Development.json
-*.Development.json
+appsettings.Local.json
+*.Local.json
 
 # User-specific files
 *.rsuser
@@ -78,3 +78,8 @@ appsettings.Development.json
 _ReSharper*/
 *.[Rr]e[Ss]harper
 *.DotSettings.user
+
+# Postman collections
+*.postman_collection.json
+World_Cup_Full_Tournament_Tests.postman_collection.json
+WorldCup_Simulator_API_Tests.postman_collection.json

@@ -32,6 +32,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IGroupService, GroupService>();
         services.AddScoped<ITeamService, TeamService>();
         services.AddScoped<IMatchService, MatchService>();
+        services.AddScoped<ISimulationService, SimulationService>();
 
         return services;
     }

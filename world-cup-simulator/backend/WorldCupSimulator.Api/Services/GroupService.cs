@@ -129,11 +129,6 @@ namespace WorldCupSimulator.Api.Services
 
         public async Task<Result> UpdateGroupAsync(int id, Group group)
         {
-            if (id != group.Id)
-            {
-                return Result.Failure(new Error("Groups.IdMismatch", "ID mismatch"));
-            }
-
             if (string.IsNullOrWhiteSpace(group.Name))
             {
                 return Result.Failure(GroupErrors.InvalidName);
@@ -144,6 +139,8 @@ namespace WorldCupSimulator.Api.Services
                 return Result.Failure(GroupErrors.NotFound(id));
             }
 
+            // Set the ID from the URL parameter to ensure consistency
+            group.Id = id;
             _context.Entry(group).State = EntityState.Modified;
 
             try
@@ -172,6 +169,14 @@ namespace WorldCupSimulator.Api.Services
 
             _context.Groups.Remove(group);
             await _context.SaveChangesAsync();
+
+            // Reset identity counter if no groups remain
+            var remainingGroupsCount = await _context.Groups.CountAsync();
+            if (remainingGroupsCount == 0)
+            {
+                await _context.Database.ExecuteSqlRawAsync("DBCC CHECKIDENT ('Groups', RESEED, 0)");
+            }
+
             return Result.Success();
         }
 
@@ -217,6 +222,150 @@ namespace WorldCupSimulator.Api.Services
                     Played = m.Played,
                     GroupId = m.GroupId ?? group.Id
                 }).ToList()
+            };
+        }
+
+        public async Task<Result<GroupStandingsResponse>> GetGroupStandingsAsync(int groupId)
+        {
+            var group = await _context.Groups
+                .Include(g => g.Teams)
+                    .ThenInclude(gt => gt.Team)
+                .Include(g => g.Matches)
+                .FirstOrDefaultAsync(g => g.Id == groupId);
+
+            if (group == null)
+            {
+                return Result.Failure<GroupStandingsResponse>(GroupErrors.NotFound(groupId));
+            }
+
+            var standings = CalculateGroupStandings(group);
+            return Result.Success(standings);
+        }
+
+        public async Task<Result<IEnumerable<GroupStandingsResponse>>> GetAllGroupStandingsAsync()
+        {
+            var groups = await _context.Groups
+                .Include(g => g.Teams)
+                    .ThenInclude(gt => gt.Team)
+                .Include(g => g.Matches)
+                .ToListAsync();
+
+            var allStandings = groups.Select(CalculateGroupStandings);
+            return Result.Success<IEnumerable<GroupStandingsResponse>>(allStandings);
+        }
+
+        public async Task<Result<IEnumerable<TeamStandingResponse>>> GetQualifiedTeamsAsync()
+        {
+            var groups = await _context.Groups
+                .Include(g => g.Teams)
+                    .ThenInclude(gt => gt.Team)
+                .Include(g => g.Matches)
+                .ToListAsync();
+
+            var qualifiedTeams = new List<TeamStandingResponse>();
+
+            foreach (var group in groups)
+            {
+                var standings = CalculateGroupStandings(group);
+                // Take top 2 teams from each group
+                qualifiedTeams.AddRange(standings.Standings.Take(2));
+            }
+
+            return Result.Success<IEnumerable<TeamStandingResponse>>(qualifiedTeams);
+        }
+
+        private GroupStandingsResponse CalculateGroupStandings(Group group)
+        {
+            var teamStats = new Dictionary<int, TeamStandingResponse>();
+
+            // Initialize team standings
+            foreach (var groupTeam in group.Teams)
+            {
+                teamStats[groupTeam.TeamId] = new TeamStandingResponse
+                {
+                    TeamId = groupTeam.TeamId,
+                    TeamName = groupTeam.Team.Name,
+                    Country = groupTeam.Team.Country,
+                    CountryCode = groupTeam.Team.CountryCode,
+                    Elo = groupTeam.Team.Elo,
+                    Points = 0,
+                    MatchesPlayed = 0,
+                    Wins = 0,
+                    Draws = 0,
+                    Losses = 0,
+                    GoalsFor = 0,
+                    GoalsAgainst = 0,
+                    GoalDifference = 0,
+                    Position = 0
+                };
+            }
+
+            // Process all played matches
+            foreach (var match in group.Matches.Where(m => m.Played))
+            {
+                if (teamStats.TryGetValue(match.TeamAId, out var teamA) && 
+                    teamStats.TryGetValue(match.TeamBId, out var teamB))
+                {
+                    // Update matches played
+                    teamA.MatchesPlayed++;
+                    teamB.MatchesPlayed++;
+
+                    // Update goals
+                    teamA.GoalsFor += match.ScoreA;
+                    teamA.GoalsAgainst += match.ScoreB;
+                    teamB.GoalsFor += match.ScoreB;
+                    teamB.GoalsAgainst += match.ScoreA;
+
+                    // Update goal difference
+                    teamA.GoalDifference = teamA.GoalsFor - teamA.GoalsAgainst;
+                    teamB.GoalDifference = teamB.GoalsFor - teamB.GoalsAgainst;
+
+                    // Update points and win/draw/loss
+                    if (match.ScoreA > match.ScoreB)
+                    {
+                        // Team A wins
+                        teamA.Wins++;
+                        teamA.Points += 3;
+                        teamB.Losses++;
+                    }
+                    else if (match.ScoreB > match.ScoreA)
+                    {
+                        // Team B wins
+                        teamB.Wins++;
+                        teamB.Points += 3;
+                        teamA.Losses++;
+                    }
+                    else
+                    {
+                        // Draw
+                        teamA.Draws++;
+                        teamB.Draws++;
+                        teamA.Points += 1;
+                        teamB.Points += 1;
+                    }
+                }
+            }
+
+            // Sort teams by FIFA World Cup tiebreaker rules
+            var sortedStandings = teamStats.Values
+                .OrderByDescending(t => t.Points)                    // 1. Points
+                .ThenByDescending(t => t.GoalDifference)             // 2. Goal difference
+                .ThenByDescending(t => t.GoalsFor)                   // 3. Goals for
+                .ThenByDescending(t => t.Wins)                       // 4. Most wins
+                .ThenBy(t => t.TeamName)                             // 5. Alphabetical (for consistency)
+                .ToList();
+
+            // Assign positions
+            for (int i = 0; i < sortedStandings.Count; i++)
+            {
+                sortedStandings[i].Position = i + 1;
+            }
+
+            return new GroupStandingsResponse
+            {
+                GroupId = group.Id,
+                GroupName = group.Name,
+                Standings = sortedStandings
             };
         }
     }

@@ -84,4 +84,36 @@ public class GroupsController : ControllerBase
                 ? NotFound(error.Description) 
                 : BadRequest(error));
     }
+
+    // GET: api/groups/5/standings
+    [HttpGet("{id}/standings")]
+    public async Task<ActionResult<GroupStandingsResponse>> GetGroupStandings(int id)
+    {
+        var result = await _groupService.GetGroupStandingsAsync(id);
+        return result.Match<ActionResult<GroupStandingsResponse>, GroupStandingsResponse>(
+            onSuccess: standings => Ok(standings),
+            onFailure: error => error.Code.Contains("NotFound") 
+                ? NotFound(error.Description) 
+                : BadRequest(error));
+    }
+
+    // GET: api/groups/standings
+    [HttpGet("standings")]
+    public async Task<ActionResult<IEnumerable<GroupStandingsResponse>>> GetAllGroupStandings()
+    {
+        var result = await _groupService.GetAllGroupStandingsAsync();
+        return result.Match<ActionResult<IEnumerable<GroupStandingsResponse>>, IEnumerable<GroupStandingsResponse>>(
+            onSuccess: standings => Ok(standings),
+            onFailure: error => BadRequest(error));
+    }
+
+    // GET: api/groups/qualified
+    [HttpGet("qualified")]
+    public async Task<ActionResult<IEnumerable<TeamStandingResponse>>> GetQualifiedTeams()
+    {
+        var result = await _groupService.GetQualifiedTeamsAsync();
+        return result.Match<ActionResult<IEnumerable<TeamStandingResponse>>, IEnumerable<TeamStandingResponse>>(
+            onSuccess: teams => Ok(teams),
+            onFailure: error => BadRequest(error));
+    }
 }
