@@ -6,48 +6,42 @@ public class SimulationService : ISimulationService
 {
     private readonly Random _random;
     
-    // Default Elo ratings for teams (you can enhance this with a database lookup)
+    // Default Elo ratings for teams (synced with frontend data)
     private readonly Dictionary<string, int> _defaultEloRatings = new()
     {
-        // Top tier teams
-        ["Brazil"] = 2100,
-        ["Argentina"] = 2080,
-        ["France"] = 2060,
-        ["England"] = 2040,
-        ["Spain"] = 2020,
-        ["Portugal"] = 2000,
-        ["Netherlands"] = 1980,
-        ["Germany"] = 1960,
-        
-        // Second tier
-        ["Croatia"] = 1920,
-        ["Italy"] = 1900,
-        ["Belgium"] = 1880,
-        ["Uruguay"] = 1860,
-        ["Denmark"] = 1840,
-        ["Mexico"] = 1820,
-        ["Switzerland"] = 1800,
-        ["Colombia"] = 1780,
-        
-        // Third tier
-        ["Poland"] = 1750,
-        ["Serbia"] = 1730,
-        ["Morocco"] = 1710,
-        ["Japan"] = 1690,
-        ["Senegal"] = 1670,
-        ["South Korea"] = 1650,
-        ["Tunisia"] = 1630,
-        ["Australia"] = 1610,
-        
-        // Fourth tier
-        ["Canada"] = 1590,
-        ["Ecuador"] = 1570,
-        ["Ghana"] = 1550,
-        ["Cameroon"] = 1530,
-        ["Qatar"] = 1510,
-        ["Costa Rica"] = 1490,
-        ["Iran"] = 1470,
-        ["Saudi Arabia"] = 1450
+        // Based on recent FIFA rankings and international performance
+        ["Brazil"] = 2001,
+        ["Argentina"] = 2131,
+        ["France"] = 2055,
+        ["Germany"] = 1913,
+        ["Spain"] = 2156,
+        ["England"] = 1984,
+        ["Italy"] = 1881,
+        ["Netherlands"] = 1975,
+        ["Portugal"] = 2030,
+        ["Belgium"] = 1846,
+        ["Croatia"] = 1926,
+        ["Uruguay"] = 1901,
+        ["Mexico"] = 1860,
+        ["Colombia"] = 1951,
+        ["Chile"] = 1688,
+        ["Peru"] = 1743,
+        ["Ecuador"] = 1905,
+        ["Venezuela"] = 1745,
+        ["United States"] = 1696,
+        ["Canada"] = 1768,
+        ["Japan"] = 1881,
+        ["South Korea"] = 1752,
+        ["Australia"] = 1773,
+        ["Saudi Arabia"] = 1567,
+        ["Iran"] = 1799,
+        ["Qatar"] = 1517,
+        ["Morocco"] = 1812,
+        ["Tunisia"] = 1614,
+        ["Egypt"] = 1667,
+        ["Ghana"] = 1478,
+        ["Nigeria"] = 1578,
+        ["Senegal"] = 1784
     };
 
     public SimulationService()
@@ -100,7 +94,7 @@ public class SimulationService : ISimulationService
         var newEloA = (int)Math.Round(teamA.Elo + kFactor * (actualScoreA - expectedScoreA));
         var newEloB = (int)Math.Round(teamB.Elo + kFactor * (actualScoreB - expectedScoreB));
 
-        // Create updated team objects
+        // Create team objects
         var updatedTeamA = new Team
         {
             Id = teamA.Id,

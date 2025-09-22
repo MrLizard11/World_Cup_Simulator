@@ -169,14 +169,6 @@ namespace WorldCupSimulator.Api.Services
 
             _context.Groups.Remove(group);
             await _context.SaveChangesAsync();
-
-            // Reset identity counter if no groups remain
-            var remainingGroupsCount = await _context.Groups.CountAsync();
-            if (remainingGroupsCount == 0)
-            {
-                await _context.Database.ExecuteSqlRawAsync("DBCC CHECKIDENT ('Groups', RESEED, 0)");
-            }
-
             return Result.Success();
         }
 
@@ -274,7 +266,7 @@ namespace WorldCupSimulator.Api.Services
             return Result.Success<IEnumerable<TeamStandingResponse>>(qualifiedTeams);
         }
 
-        private GroupStandingsResponse CalculateGroupStandings(Group group)
+        internal GroupStandingsResponse CalculateGroupStandings(Group group)
         {
             var teamStats = new Dictionary<int, TeamStandingResponse>();
 
