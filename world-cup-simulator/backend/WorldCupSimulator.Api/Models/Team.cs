@@ -3,6 +3,7 @@ namespace WorldCupSimulator.Api.Models;
 public class Team
 {
     public int Id { get; set; }
+    public string SessionId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Country { get; set; } = string.Empty;
     public int Elo { get; set; }
