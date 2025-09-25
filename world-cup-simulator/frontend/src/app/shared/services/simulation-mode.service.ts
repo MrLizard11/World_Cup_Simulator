@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
+import { Observable, switchMap } from 'rxjs';
 import { Team } from '../../models/team.model';
-import { MatchSimulationService } from './match-simulation.service';
+import { ServerMatchSimulationService, SimulationMode as ServerSimulationMode } from './server-match-simulation.service';
 
 export enum SimulationMode {
-  RANDOM = 'random',
-  ELO_SIMPLE = 'elo_simple', 
-  ELO_REALISTIC = 'elo_realistic',
-  ELO_ADVANCED = 'elo_advanced'
+  RANDOM = 'Random',
+  ELO_SIMPLE = 'EloSimple',
+  ELO_REALISTIC = 'EloRealistic',
+  ELO_ADVANCED = 'EloAdvanced'
 }
 
 @Injectable({
@@ -15,7 +16,7 @@ export enum SimulationMode {
 export class SimulationModeService {
   private currentMode: SimulationMode = SimulationMode.ELO_REALISTIC;
 
-  constructor(private matchSimulation: MatchSimulationService) { }
+  constructor(private serverSimulation: ServerMatchSimulationService) { }
 
   setSimulationMode(mode: SimulationMode): void {
     this.currentMode = mode;
@@ -28,22 +29,24 @@ export class SimulationModeService {
   /**
    * Simulate a match using the currently selected mode
    */
-  simulateMatch(teamA: Team, teamB: Team, situationalFactors?: any): { scoreA: number, scoreB: number } {
-    switch (this.currentMode) {
+  simulateMatch(teamA: Team, teamB: Team, situationalFactors?: any): Observable<{ scoreA: number, scoreB: number }> {
+    const serverMode = this.mapToServerMode(this.currentMode);
+    return this.serverSimulation.simulateMatchWithMode(teamA, teamB, serverMode);
+  }
+
+  /**
+   * Map local simulation modes to server modes
+   */
+  private mapToServerMode(mode: SimulationMode): ServerSimulationMode {
+    switch (mode) {
       case SimulationMode.RANDOM:
-        return this.generatePureRandomScores();
-      
+        return ServerSimulationMode.RANDOM;
       case SimulationMode.ELO_SIMPLE:
-        return this.matchSimulation.simulateSimpleEloMatch(teamA, teamB);
-      
       case SimulationMode.ELO_REALISTIC:
-        return this.matchSimulation.simulateRealisticMatch(teamA, teamB);
-      
       case SimulationMode.ELO_ADVANCED:
-        return this.matchSimulation.simulateAdvancedMatch(teamA, teamB, situationalFactors);
-      
+        return ServerSimulationMode.ELO_REALISTIC;
       default:
-        return this.matchSimulation.simulateRealisticMatch(teamA, teamB);
+        return ServerSimulationMode.ELO_REALISTIC;
     }
   }
 
@@ -53,19 +56,19 @@ export class SimulationModeService {
   getCurrentModeDescription(): string {
     switch (this.currentMode) {
       case SimulationMode.RANDOM:
-        return 'Pure random scoring (0-4 goals each team)';
+        return 'Pure random scoring - completely unpredictable results';
       
       case SimulationMode.ELO_SIMPLE:
-        return 'Elo-weighted random with strength factors';
+        return 'Basic Elo-based simulation with strength factors';
       
       case SimulationMode.ELO_REALISTIC:
-        return 'Elo-based win probability with Poisson distribution';
+        return 'Advanced Elo simulation with win probability and statistical models';
       
       case SimulationMode.ELO_ADVANCED:
-        return 'Advanced simulation with form, importance, and situational factors';
+        return 'Most sophisticated simulation with team form and situational factors';
       
       default:
-        return 'Unknown mode';
+        return 'Advanced Elo simulation with win probability and statistical models';
     }
   }
 
@@ -76,23 +79,23 @@ export class SimulationModeService {
     return [
       {
         mode: SimulationMode.RANDOM,
-        name: 'Random',
+        name: 'Random Mode',
         description: 'Pure random scoring - completely unpredictable results'
       },
       {
         mode: SimulationMode.ELO_SIMPLE,
         name: 'Elo Simple',
-        description: 'Elo ratings affect goal scoring with strength multipliers'
+        description: 'Basic Elo-based simulation with strength factors'
       },
       {
         mode: SimulationMode.ELO_REALISTIC,
         name: 'Elo Realistic',
-        description: 'Realistic simulation using Elo win probability and Poisson distribution'
+        description: 'Advanced Elo simulation with win probability and statistical models'
       },
       {
         mode: SimulationMode.ELO_ADVANCED,
         name: 'Elo Advanced',
-        description: 'Most realistic - includes team form, match importance, and situational factors'
+        description: 'Most sophisticated simulation with team form and situational factors'
       }
     ];
   }
@@ -110,25 +113,30 @@ export class SimulationModeService {
   /**
    * Get expected statistics for a match without simulating it
    */
-  getMatchPreview(teamA: Team, teamB: Team): {
+  getMatchPreview(teamA: Team, teamB: Team): Observable<{
     winProbabilityA: number;
     winProbabilityB: number;
     drawProbability: number;
     expectedGoalsA: number;
     expectedGoalsB: number;
     eloDifference: number;
-  } {
-    // Simulate once to get statistics
-    const result = this.matchSimulation.simulateRealisticMatch(teamA, teamB);
-    const stats = this.matchSimulation.calculateMatchStats(teamA, teamB, result.scoreA, result.scoreB);
-    
-    return {
-      winProbabilityA: stats.winProbabilityA,
-      winProbabilityB: stats.winProbabilityB,
-      drawProbability: stats.drawProbability,
-      expectedGoalsA: result.scoreA, // This would need averaging over multiple simulations for true expected value
-      expectedGoalsB: result.scoreB,
-      eloDifference: stats.eloChangeA
-    };
+  }> {
+    // Use server simulation to get statistics
+    return this.serverSimulation.simulateRealisticMatch(teamA, teamB).pipe(
+      switchMap(result => {
+        // For now, provide basic statistics - the server could provide more detailed stats in the future
+        const eloDiff = teamA.elo - teamB.elo;
+        const winProbA = 1 / (1 + Math.pow(10, -eloDiff / 400));
+        
+        return [{
+          winProbabilityA: winProbA,
+          winProbabilityB: 1 - winProbA,
+          drawProbability: 0.25, // Rough estimate
+          expectedGoalsA: result.scoreA,
+          expectedGoalsB: result.scoreB,
+          eloDifference: eloDiff
+        }];
+      })
+    );
   }
 }

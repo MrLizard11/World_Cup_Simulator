@@ -1,13 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Team } from '../../models/team.model';
-import { MatchSimulationService } from './match-simulation.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class EloUpdateService {
   
-  constructor(private matchSimulation: MatchSimulationService) { }
+  constructor() { }
 
   /**
    * Update team Elo ratings after a match
@@ -24,18 +23,40 @@ export class EloUpdateService {
     scoreB: number
   ): { teamA: Team; teamB: Team } {
     
-    // Calculate match statistics including Elo changes
-    const matchStats = this.matchSimulation.calculateMatchStats(teamA, teamB, scoreA, scoreB);
+    // Calculate Elo changes using standard algorithm
+    const K = 32; // K-factor for World Cup matches
+    const eloDiff = teamA.elo - teamB.elo;
+    const expectedA = 1 / (1 + Math.pow(10, -eloDiff / 400));
+    const expectedB = 1 - expectedA;
+    
+    // Determine actual result
+    let actualA: number;
+    let actualB: number;
+    
+    if (scoreA > scoreB) {
+      actualA = 1;
+      actualB = 0;
+    } else if (scoreB > scoreA) {
+      actualA = 0;
+      actualB = 1;
+    } else {
+      actualA = 0.5;
+      actualB = 0.5;
+    }
+    
+    // Calculate Elo changes
+    const eloChangeA = K * (actualA - expectedA);
+    const eloChangeB = K * (actualB - expectedB);
     
     // Create updated team objects with new Elo ratings
     const updatedTeamA: Team = {
       ...teamA,
-      elo: Math.round(teamA.elo + matchStats.eloChangeA) // Round to nearest integer
+      elo: Math.round(teamA.elo + eloChangeA) // Round to nearest integer
     };
     
     const updatedTeamB: Team = {
       ...teamB,
-      elo: Math.round(teamB.elo + matchStats.eloChangeB) // Round to nearest integer
+      elo: Math.round(teamB.elo + eloChangeB) // Round to nearest integer
     };
 
     return {
@@ -55,13 +76,36 @@ export class EloUpdateService {
     scoreB: number
   ): { eloChangeA: number; eloChangeB: number; newEloA: number; newEloB: number } {
     
-    const matchStats = this.matchSimulation.calculateMatchStats(teamA, teamB, scoreA, scoreB);
+    // Calculate Elo changes using standard algorithm
+    const K = 32; // K-factor for World Cup matches
+    const eloDiff = teamA.elo - teamB.elo;
+    const expectedA = 1 / (1 + Math.pow(10, -eloDiff / 400));
+    const expectedB = 1 - expectedA;
+    
+    // Determine actual result
+    let actualA: number;
+    let actualB: number;
+    
+    if (scoreA > scoreB) {
+      actualA = 1;
+      actualB = 0;
+    } else if (scoreB > scoreA) {
+      actualA = 0;
+      actualB = 1;
+    } else {
+      actualA = 0.5;
+      actualB = 0.5;
+    }
+    
+    // Calculate Elo changes
+    const eloChangeA = K * (actualA - expectedA);
+    const eloChangeB = K * (actualB - expectedB);
     
     return {
-      eloChangeA: matchStats.eloChangeA,
-      eloChangeB: matchStats.eloChangeB,
-      newEloA: Math.round(teamA.elo + matchStats.eloChangeA),
-      newEloB: Math.round(teamB.elo + matchStats.eloChangeB)
+      eloChangeA: eloChangeA,
+      eloChangeB: eloChangeB,
+      newEloA: Math.round(teamA.elo + eloChangeA),
+      newEloB: Math.round(teamB.elo + eloChangeB)
     };
   }
 
@@ -81,7 +125,7 @@ export class EloUpdateService {
     description: string;
   } {
     
-    const matchStats = this.matchSimulation.calculateMatchStats(teamA, teamB, scoreA, scoreB);
+    const eloChanges = this.previewEloChanges(teamA, teamB, scoreA, scoreB);
     
     let winner: string;
     let loser: string;
@@ -91,16 +135,16 @@ export class EloUpdateService {
     if (scoreA > scoreB) {
       winner = teamA.name;
       loser = teamB.name;
-      winnerChange = matchStats.eloChangeA;
-      loserChange = matchStats.eloChangeB;
+      winnerChange = eloChanges.eloChangeA;
+      loserChange = eloChanges.eloChangeB;
     } else if (scoreB > scoreA) {
       winner = teamB.name;
       loser = teamA.name;
-      winnerChange = matchStats.eloChangeB;
-      loserChange = matchStats.eloChangeA;
+      winnerChange = eloChanges.eloChangeB;
+      loserChange = eloChanges.eloChangeA;
     } else {
       // Draw - both teams get smaller changes
-      const avgChange = Math.abs((matchStats.eloChangeA + matchStats.eloChangeB) / 2);
+      const avgChange = Math.abs((eloChanges.eloChangeA + eloChanges.eloChangeB) / 2);
       return {
         winner: 'Draw',
         loser: 'Draw',
@@ -110,7 +154,11 @@ export class EloUpdateService {
       };
     }
     
-    const isUpset = matchStats.upsetFactor > 0.1;
+    const eloDiff = teamA.elo - teamB.elo;
+    const expectedA = 1 / (1 + Math.pow(10, -eloDiff / 400));
+    
+    // Determine if this was an upset based on expected probability
+    const isUpset = (scoreA > scoreB && expectedA < 0.3) || (scoreB > scoreA && expectedA > 0.7);
     const changeSize = Math.abs(winnerChange);
     
     let impact: 'minor' | 'moderate' | 'major';
