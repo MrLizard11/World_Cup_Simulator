@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Team } from '../models';
 import { Group, Match, GroupStandings, TeamStanding } from '../models/group.model';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable, BehaviorSubject, switchMap, map, throwError } from 'rxjs';
 import { KnockoutMatch } from '../models/knockouts.model';
 import { TournamentStateService } from '../summary-page/tournament-state.service';
 import { SimulationModeService } from '../shared/services/simulation-mode.service';
@@ -161,22 +161,24 @@ export class MatchesService {
   // Simulate a match between two teams using Elo ratings and realistic algorithms
   simulateMatch(teamA: Team, teamB: Team): Observable<{ teamA: Team, teamB: Team, scoreA: number, scoreB: number }> {
     // Use the current simulation mode
-    const result = this.simulationModeService.simulateMatch(teamA, teamB);
+    return this.simulationModeService.simulateMatch(teamA, teamB).pipe(
+      map(result => {
+        // Update team Elo ratings based on match result
+        const updatedTeams = this.eloUpdateService.updateTeamElosAfterMatch(
+          teamA, 
+          teamB, 
+          result.scoreA, 
+          result.scoreB
+        );
 
-    // Update team Elo ratings based on match result
-    const updatedTeams = this.eloUpdateService.updateTeamElosAfterMatch(
-      teamA, 
-      teamB, 
-      result.scoreA, 
-      result.scoreB
+        return {
+          teamA: updatedTeams.teamA,  // Return updated team with new Elo
+          teamB: updatedTeams.teamB,  // Return updated team with new Elo
+          scoreA: result.scoreA,
+          scoreB: result.scoreB
+        };
+      })
     );
-
-    return new BehaviorSubject({
-      teamA: updatedTeams.teamA,  // Return updated team with new Elo
-      teamB: updatedTeams.teamB,  // Return updated team with new Elo
-      scoreA: result.scoreA,
-      scoreB: result.scoreB
-    }).asObservable();
   }
 
   updateStandingsAfterMatch(match: Match, groupStandings: TeamStanding[]) {
@@ -235,44 +237,74 @@ export class MatchesService {
       });
   }
 
-  simulateMatchInPlace(match: Match, groupStandings: TeamStanding[]) {
+  simulateMatchInPlace(match: Match, groupStandings: TeamStanding[]): Observable<void> {
     try {
       // Use the current simulation mode instead of pure random
-      const result = this.simulationModeService.simulateMatch(match.teamA, match.teamB);
-      
-      match.scoreA = result.scoreA;
-      match.scoreB = result.scoreB;
-      match.played = true;
+      return this.simulationModeService.simulateMatch(match.teamA, match.teamB).pipe(
+        map(result => {
+          match.scoreA = result.scoreA;
+          match.scoreB = result.scoreB;
+          match.played = true;
 
-      // Update standings
-      this.updateStandingsAfterMatch(match, groupStandings);
+          // Update standings
+          this.updateStandingsAfterMatch(match, groupStandings);
 
-      // Match simulated successfully
+          // Match simulated successfully
+          return undefined;
+        })
+      );
     } catch (error) {
       console.error(`Error simulating match between ${match.teamA.name} and ${match.teamB.name}:`, error);
       // Reset match state on error
       match.played = false;
       match.scoreA = 0;
       match.scoreB = 0;
+      return new BehaviorSubject(undefined).asObservable();
     }
   }
 
-  runAllMatchesInGroups(groups: Group[], groupStandings: TeamStanding[]) {
+  runAllMatchesInGroups(groups: Group[], groupStandings: TeamStanding[]): Observable<void> {
     try {
-      let simulatedCount = 0;
-      // Simulate all matches in all groups
+      const simulationPromises: Observable<void>[] = [];
+      
+      // Collect all simulation observables
       groups.forEach(group => {
         group.matches.forEach(match => {
           if (!match.played) {
-            this.simulateMatchInPlace(match, groupStandings);
-            simulatedCount++;
+            simulationPromises.push(this.simulateMatchInPlace(match, groupStandings));
           }
         });
       });
-      // All matches simulated successfully
+      
+      // If no matches to simulate, return completed observable
+      if (simulationPromises.length === 0) {
+        return new BehaviorSubject(undefined).asObservable();
+      }
+      
+      // Run all simulations and wait for completion
+      return new Observable(observer => {
+        let completedCount = 0;
+        const totalCount = simulationPromises.length;
+        
+        simulationPromises.forEach(simPromise => {
+          simPromise.subscribe({
+            next: () => {
+              completedCount++;
+              if (completedCount === totalCount) {
+                observer.next(undefined);
+                observer.complete();
+              }
+            },
+            error: (error) => {
+              observer.error(error);
+            }
+          });
+        });
+      });
+      
     } catch (error) {
       console.error('Error simulating group matches:', error);
-      throw new Error('Failed to complete group stage simulation');
+      return throwError(() => new Error('Failed to complete group stage simulation'));
     }
   }
 

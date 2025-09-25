@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Team } from '../models';
 import { Group, Match, GroupStandings, TeamStanding } from '../models/group.model';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable, BehaviorSubject, map } from 'rxjs';
 import { KnockoutMatch } from '../models/knockouts.model';
 import { MatchesService } from '../group-stage/matches.service';
 import { TournamentStateService } from '../summary-page/tournament-state.service';
@@ -261,11 +261,14 @@ export class KnockoutStageService {
   }
 
   // Simulate a match in the knockout stage
-  simulateMatch(match: KnockoutMatch): void {
-    this.simulationService.simulateMatch(match);
-    
-    // Update tournament state after each match
-    this.updateTournamentState();
+  simulateMatch(match: KnockoutMatch): Observable<void> {
+    return this.simulationService.simulateMatch(match).pipe(
+      map(() => {
+        // Update tournament state after each match
+        this.updateTournamentState();
+        return undefined;
+      })
+    );
   }
 
   // Update tournament state with current knockout progress

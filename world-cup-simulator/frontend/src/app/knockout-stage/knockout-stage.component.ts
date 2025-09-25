@@ -3,6 +3,8 @@ import { Team } from '../models';
 import { KnockoutMatch } from '../models/knockouts.model';
 import { KnockoutStageService } from './knockout-stage.service';
 import { SimulationMode } from '../shared/services/simulation-mode.service';
+import { Observable, forkJoin, of } from 'rxjs';
+import { switchMap, tap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-knockout-stage',
@@ -92,10 +94,18 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
 
   simulateMatch(match: KnockoutMatch) {
     try {
-      this.knockoutStageService.simulateMatch(match);
-
-      // Check if any rounds have been completed through individual match simulation
-      this.updateRoundCompletionFromService();
+      this.knockoutStageService.simulateMatch(match).subscribe({
+        next: () => {
+          // Check if any rounds have been completed through individual match simulation
+          this.updateRoundCompletionFromService();
+        },
+        error: (error) => {
+          console.error('Error simulating knockout match:', error);
+          // Reset match state on error
+          match.played = false;
+          match.winner = '';
+        }
+      });
     } catch (error) {
       console.error('Error simulating knockout match:', error);
       // Reset match state on error
@@ -105,98 +115,103 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
   }
 
   onSimulationModeChanged(mode: SimulationMode): void {
-    console.log('Simulation mode changed to:', mode);
     // The mode is automatically updated in the service, no additional action needed
   }
 
   runAllRoundOf16() {
     if (this.roundOf16Simulated) return;
 
-    try {
-      this.leftBracketRoundOf16.forEach(match => {
-        if (!match.played) {
-          this.simulateMatch(match);
-        }
-      });
-      this.rightBracketRoundOf16.forEach(match => {
-        if (!match.played) {
-          this.simulateMatch(match);
-        }
-      });
-      this.knockoutStageService.checkAndAdvanceToQuarterFinals();
-      this.roundOf16Simulated = true;
-    } catch (error) {
-      console.error('Error running Round of 16:', error);
-      // Reset simulation status on error
-      this.roundOf16Simulated = false;
-    }
+    const roundOf16Matches = [
+      ...this.leftBracketRoundOf16.filter(match => !match.played),
+      ...this.rightBracketRoundOf16.filter(match => !match.played)
+    ];
+
+    this.simulateMatchesInParallel(roundOf16Matches).subscribe({
+      next: () => {
+        this.knockoutStageService.checkAndAdvanceToQuarterFinals();
+        this.roundOf16Simulated = true;
+        this.updateRoundCompletionFromService();
+      },
+      error: (error) => {
+        console.error('Error running Round of 16:', error);
+        this.roundOf16Simulated = false;
+      }
+    });
   }
-  
+
   runQuarterFinals() {
     if (this.quarterFinalsSimulated || !this.areAllRoundOf16MatchesPlayed()) return;
 
-    try {
-      this.leftBracketQuarterFinals.forEach(match => {
-        if (!match.played) {
-          this.simulateMatch(match);
-        }
-      });
-      this.rightBracketQuarterFinals.forEach(match => {
-        if (!match.played) {
-          this.simulateMatch(match);
-        }
-      });
-      this.knockoutStageService.checkAndAdvanceToSemiFinals();
-      this.quarterFinalsSimulated = true;
-    } catch (error) {
-      console.error('Error running Quarter Finals:', error);
-      this.quarterFinalsSimulated = false;
-    }
+    const quarterFinalMatches = [
+      ...this.leftBracketQuarterFinals.filter(match => !match.played),
+      ...this.rightBracketQuarterFinals.filter(match => !match.played)
+    ];
+
+    this.simulateMatchesInParallel(quarterFinalMatches).subscribe({
+      next: () => {
+        this.knockoutStageService.checkAndAdvanceToSemiFinals();
+        this.quarterFinalsSimulated = true;
+        this.updateRoundCompletionFromService();
+      },
+      error: (error) => {
+        console.error('Error running Quarter Finals:', error);
+        this.quarterFinalsSimulated = false;
+      }
+    });
   }
 
   runSemiFinals() {
     if (this.semiFinalsSimulated || !this.areAllQuarterFinalMatchesPlayed()) return;
 
-    try {
-      if (this.leftBracketSemiFinal && !this.leftBracketSemiFinal.played) {
-        this.simulateMatch(this.leftBracketSemiFinal);
+    const semiFinalMatches = [
+      this.leftBracketSemiFinal,
+      this.rightBracketSemiFinal
+    ].filter(match => match && !match.played) as KnockoutMatch[];
+
+    this.simulateMatchesInParallel(semiFinalMatches).subscribe({
+      next: () => {
+        this.knockoutStageService.checkAndAdvanceToFinals();
+        this.semiFinalsSimulated = true;
+        this.updateRoundCompletionFromService();
+      },
+      error: (error) => {
+        console.error('Error running Semi Finals:', error);
+        this.semiFinalsSimulated = false;
       }
-      if (this.rightBracketSemiFinal && !this.rightBracketSemiFinal.played) {
-        this.simulateMatch(this.rightBracketSemiFinal);
-      }
-      this.knockoutStageService.checkAndAdvanceToFinals();
-      this.semiFinalsSimulated = true;
-    } catch (error) {
-      console.error('Error running Semi Finals:', error);
-      this.semiFinalsSimulated = false;
-    }
+    });
   }
 
   runThirdPlace() {
     if (this.thirdPlaceSimulated || !this.areAllSemiFinalMatchesPlayed()) return;
 
-    try {
-      if (this.thirdPlaceMatch && !this.thirdPlaceMatch.played) {
-        this.simulateMatch(this.thirdPlaceMatch);
-      }
-      this.thirdPlaceSimulated = true;
-    } catch (error) {
-      console.error('Error running Third Place match:', error);
-      this.thirdPlaceSimulated = false;
+    if (this.thirdPlaceMatch && !this.thirdPlaceMatch.played) {
+      this.knockoutStageService.simulateMatch(this.thirdPlaceMatch).subscribe({
+        next: () => {
+          this.thirdPlaceSimulated = true;
+          this.updateRoundCompletionFromService();
+        },
+        error: (error) => {
+          console.error('Error running Third Place match:', error);
+          this.thirdPlaceSimulated = false;
+        }
+      });
     }
   }
 
   runFinal() {
     if (this.finalSimulated || !this.areAllSemiFinalMatchesPlayed() || !this.thirdPlaceSimulated) return;
 
-    try {
-      if (this.finalMatch && !this.finalMatch.played) {
-        this.simulateMatch(this.finalMatch);
-      }
-      this.finalSimulated = true;
-    } catch (error) {
-      console.error('Error running Final:', error);
-      this.finalSimulated = false;
+    if (this.finalMatch && !this.finalMatch.played) {
+      this.knockoutStageService.simulateMatch(this.finalMatch).subscribe({
+        next: () => {
+          this.finalSimulated = true;
+          this.updateRoundCompletionFromService();
+        },
+        error: (error) => {
+          console.error('Error running Final:', error);
+          this.finalSimulated = false;
+        }
+      });
     }
   }
 
@@ -204,61 +219,66 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
   runAllMatches() {
     if (this.allMatchesSimulated) return;
 
-    try {
-      this.leftBracketRoundOf16.forEach(match => {
-        if (!match.played) {
-          this.simulateMatch(match);
+    // Simulate Round of 16 matches
+    const roundOf16Matches = [
+      ...this.leftBracketRoundOf16.filter(match => !match.played),
+      ...this.rightBracketRoundOf16.filter(match => !match.played)
+    ];
+
+    this.simulateMatchesInParallel(roundOf16Matches)
+      .pipe(
+        tap(() => {
+          this.knockoutStageService.checkAndAdvanceToQuarterFinals();
+          this.roundOf16Simulated = true;
+        }),
+        switchMap(() => {
+          // Simulate Quarter Finals matches
+          const quarterFinalMatches = [
+            ...this.leftBracketQuarterFinals.filter(match => !match.played),
+            ...this.rightBracketQuarterFinals.filter(match => !match.played)
+          ];
+          return this.simulateMatchesInParallel(quarterFinalMatches);
+        }),
+        tap(() => {
+          this.knockoutStageService.checkAndAdvanceToSemiFinals();
+          this.quarterFinalsSimulated = true;
+        }),
+        switchMap(() => {
+          // Simulate Semi Finals matches
+          const semiFinalMatches = [
+            this.leftBracketSemiFinal,
+            this.rightBracketSemiFinal
+          ].filter(match => match && !match.played) as KnockoutMatch[];
+          return this.simulateMatchesInParallel(semiFinalMatches);
+        }),
+        tap(() => {
+          this.knockoutStageService.checkAndAdvanceToFinals();
+          this.semiFinalsSimulated = true;
+        }),
+        switchMap(() => {
+          // Simulate third place match and final
+          const finalMatches = [];
+          if (this.thirdPlaceMatch && !this.thirdPlaceMatch.played) {
+            finalMatches.push(this.thirdPlaceMatch);
+          }
+          if (this.finalMatch && !this.finalMatch.played) {
+            finalMatches.push(this.finalMatch);
+          }
+          return this.simulateMatchesInParallel(finalMatches);
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.allMatchesSimulated = true;
+          this.thirdPlaceSimulated = true;
+          this.finalSimulated = true;
+          this.updateRoundCompletionFromService();
+        },
+        error: (error) => {
+          console.error('Error running all knockout matches:', error);
+          this.allMatchesSimulated = false;
         }
       });
-      this.rightBracketRoundOf16.forEach(match => {
-        if (!match.played) {
-          this.simulateMatch(match);
-        }
-      });
-      this.knockoutStageService.checkAndAdvanceToQuarterFinals();
-
-      this.leftBracketQuarterFinals.forEach(match => {
-        if (!match.played) {
-          this.simulateMatch(match);
-        }
-      });
-      this.rightBracketQuarterFinals.forEach(match => {
-        if (!match.played) {
-          this.simulateMatch(match);
-        }
-      });
-      this.knockoutStageService.checkAndAdvanceToSemiFinals();
-
-      if (this.leftBracketSemiFinal && !this.leftBracketSemiFinal.played) {
-        this.simulateMatch(this.leftBracketSemiFinal);
-      }
-      if (this.rightBracketSemiFinal && !this.rightBracketSemiFinal.played) {
-        this.simulateMatch(this.rightBracketSemiFinal);
-      }
-      this.knockoutStageService.checkAndAdvanceToFinals();
-
-      // Simulate third place match
-      if (this.thirdPlaceMatch && !this.thirdPlaceMatch.played) {
-        this.simulateMatch(this.thirdPlaceMatch);
-      }
-
-      // Only simulate final after third place is complete
-      if (this.finalMatch && !this.finalMatch.played && this.thirdPlaceMatch?.played) {
-        this.simulateMatch(this.finalMatch);
-      }
-
-      // Set all flags to true when all matches are simulated
-      this.allMatchesSimulated = true;
-      this.roundOf16Simulated = true;
-      this.quarterFinalsSimulated = true;
-      this.semiFinalsSimulated = true;
-      this.thirdPlaceSimulated = true;
-      this.finalSimulated = true;
-    } catch (error) {
-      console.error('Error running all knockout matches:', error);
-      // Reset simulation status on error
-      this.allMatchesSimulated = false;
-    }
   }
 
   isWinner(match: KnockoutMatch, team: 'A' | 'B'): boolean {
@@ -385,5 +405,18 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Error during knockout stage cleanup:', error);
     }
+  }
+
+  // Helper method to simulate multiple matches in parallel
+  private simulateMatchesInParallel(matches: KnockoutMatch[]): Observable<void[]> {
+    if (matches.length === 0) {
+      return of([]);
+    }
+
+    const simulationObservables = matches.map(match => 
+      this.knockoutStageService.simulateMatch(match)
+    );
+
+    return forkJoin(simulationObservables);
   }
 }
