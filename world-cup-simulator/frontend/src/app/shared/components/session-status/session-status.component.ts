@@ -1,8 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subject, takeUntil } from 'rxjs';
+import { Component, OnInit, OnDestroy, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { SessionService } from '../../services/session.service';
 import { TournamentApiService } from '../../services/tournament-api.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 /**
  * Session Status Component
@@ -22,11 +23,13 @@ export class SessionStatusComponent implements OnInit, OnDestroy {
   isTestingApi = false;
   isResetting = false;
 
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
   constructor(
     private readonly sessionService: SessionService,
     private readonly tournamentApi: TournamentApiService
+    ,
+    private readonly snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
@@ -34,8 +37,7 @@ export class SessionStatusComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+    // takeUntilDestroyed handles unsubscription automatically
   }
 
   copySessionId(): void {
@@ -57,7 +59,7 @@ export class SessionStatusComponent implements OnInit, OnDestroy {
     this.showStatus('Testing API connection...', 'info');
     
     this.tournamentApi.getTournamentStatistics()
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.showStatus('✅ API connection successful! Multi-user system is working.', 'success');
@@ -79,7 +81,7 @@ export class SessionStatusComponent implements OnInit, OnDestroy {
     this.showStatus('Resetting tournament...', 'info');
     
     this.tournamentApi.resetTournament()
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.showStatus('✅ Tournament reset successfully! Only your session was affected.', 'success');
@@ -102,12 +104,9 @@ export class SessionStatusComponent implements OnInit, OnDestroy {
   }
 
   private showStatus(message: string, type: 'success' | 'error' | 'info'): void {
-    this.statusMessage = message;
-    this.statusClass = `status-${type}`;
-    
-    setTimeout(() => {
-      this.statusMessage = '';
-      this.statusClass = '';
-    }, 5000);
+    this.snackBar.open(message, undefined, {
+      duration: 5000,
+      panelClass: [`mat-snackbar-${type}`]
+    });
   }
 }

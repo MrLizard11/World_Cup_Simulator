@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
@@ -50,6 +51,7 @@ import { TechnicalInfoComponent } from './shared/components/simulation-info-popu
 import { ExampleSectionComponent } from './shared/components/simulation-info-popup/mode-section/example-section';
 import { ProsConsComponent } from './shared/components/simulation-info-popup/mode-section/pros-cons';
 import { SessionStatusComponent } from './shared/components/session-status/session-status.component';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 
 @NgModule({
@@ -101,11 +103,13 @@ import { SessionStatusComponent } from './shared/components/session-status/sessi
   ],
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,
     CommonModule,
     AppRoutingModule,
     ReactiveFormsModule,
     FormsModule,
     HttpClientModule
+    ,MatSnackBarModule
   ],
   providers: [
     {

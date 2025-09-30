@@ -177,3 +177,19 @@
     gap: 4px;
   }
 }
+
+/* Material snack bar panel classes used by session-status component */
+.mat-snackbar-success {
+  background-color: #4caf50 !important; /* green */
+  color: white !important;
+}
+
+.mat-snackbar-error {
+  background-color: #f44336 !important; /* red */
+  color: white !important;
+}
+
+.mat-snackbar-info {
+  background-color: #2196f3 !important; /* blue */
+  color: white !important;
+}
