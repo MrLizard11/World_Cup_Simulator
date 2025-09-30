@@ -1,4 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { EMPTY } from 'rxjs';
+import { take, catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { Team } from '../models/team.model';
 import { Group, Match, TeamStanding } from '../models/group.model';
@@ -73,35 +75,41 @@ export class GroupStageComponent implements OnInit, OnDestroy {
   }
 
   simulateMatch(match: Match) {
-    this.matchesService.simulateMatchInPlace(match, this.groupStandings).subscribe({
-      next: () => {
-        // Match simulation completed - UI should automatically update
-        console.log(`Match simulated: ${match.teamA.name} vs ${match.teamB.name}`);
-      },
-      error: (error) => {
-        console.error('Error simulating match:', error);
-        alert('Failed to simulate match. Please try again.');
-      }
-    });
+    const sub = this.matchesService
+      .simulateMatchInPlace(match, this.groupStandings)
+      .pipe(
+        take(1),
+        catchError((error) => {
+          console.error('Error simulating match:', error);
+          alert('Failed to simulate match. Please try again.');
+          return EMPTY;
+        })
+      )
+      .subscribe(() => {
+        // Match simulation completed - UI updates via data binding
+      });
   }
 
   onSimulationModeChanged(mode: SimulationMode): void {
     this.simulationModeService.setSimulationMode(mode);
-    console.log('Simulation mode updated to:', mode);
   }
 
   runAllMatches() {
     try {
-      this.matchesService.runAllMatchesInGroups(this.groups, this.groupStandings).subscribe({
-        next: () => {
-          console.log('All group matches completed successfully!');
+      const sub = this.matchesService
+        .runAllMatchesInGroups(this.groups, this.groupStandings)
+        .pipe(
+          take(1),
+          catchError((error) => {
+            console.error('Error running all matches:', error);
+            alert('Failed to simulate all matches. Please try individual match simulation.');
+            return EMPTY;
+          })
+        )
+        .subscribe(() => {
+          // Notify user of success
           alert('All group matches have been simulated successfully!');
-        },
-        error: (error) => {
-          console.error('Error running all matches:', error);
-          alert('Failed to simulate all matches. Please try individual match simulation.');
-        }
-      });
+        });
     } catch (error) {
       console.error('Error running all matches:', error);
       alert('Failed to simulate all matches. Please try individual match simulation.');

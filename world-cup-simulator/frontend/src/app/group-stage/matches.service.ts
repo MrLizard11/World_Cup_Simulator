@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Team } from '../models';
 import { Group, Match, GroupStandings, TeamStanding } from '../models/group.model';
-import { Observable, BehaviorSubject, switchMap, map, throwError } from 'rxjs';
+import { Observable, forkJoin, of, switchMap, map, throwError } from 'rxjs';
 import { KnockoutMatch } from '../models/knockouts.model';
 import { TournamentStateService } from '../summary-page/tournament-state.service';
 import { SimulationModeService } from '../shared/services/simulation-mode.service';
@@ -155,7 +155,7 @@ export class MatchesService {
 
   runAllMatches(group: Group): Observable<Group> {
     const matchObservables = group.matches.map(match => this.simulateMatch(match.teamA, match.teamB));
-    return new BehaviorSubject(group).asObservable();
+    return of(group);
   }
 
   // Simulate a match between two teams using Elo ratings and realistic algorithms
@@ -259,48 +259,32 @@ export class MatchesService {
       match.played = false;
       match.scoreA = 0;
       match.scoreB = 0;
-      return new BehaviorSubject(undefined).asObservable();
+  return of(undefined);
     }
   }
 
   runAllMatchesInGroups(groups: Group[], groupStandings: TeamStanding[]): Observable<void> {
     try {
-      const simulationPromises: Observable<void>[] = [];
+  const simulationObservables: Observable<void>[] = [];
       
       // Collect all simulation observables
       groups.forEach(group => {
         group.matches.forEach(match => {
           if (!match.played) {
-            simulationPromises.push(this.simulateMatchInPlace(match, groupStandings));
+            simulationObservables.push(this.simulateMatchInPlace(match, groupStandings));
           }
         });
       });
       
       // If no matches to simulate, return completed observable
-      if (simulationPromises.length === 0) {
-        return new BehaviorSubject(undefined).asObservable();
+      if (simulationObservables.length === 0) {
+        return of(undefined);
       }
-      
-      // Run all simulations and wait for completion
-      return new Observable(observer => {
-        let completedCount = 0;
-        const totalCount = simulationPromises.length;
-        
-        simulationPromises.forEach(simPromise => {
-          simPromise.subscribe({
-            next: () => {
-              completedCount++;
-              if (completedCount === totalCount) {
-                observer.next(undefined);
-                observer.complete();
-              }
-            },
-            error: (error) => {
-              observer.error(error);
-            }
-          });
-        });
-      });
+
+      // Run all simulations and wait for completion using forkJoin to avoid untracked subscriptions
+      return forkJoin(simulationObservables).pipe(
+        map(() => undefined)
+      );
       
     } catch (error) {
       console.error('Error simulating group matches:', error);
