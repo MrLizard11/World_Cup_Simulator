@@ -9,6 +9,12 @@ export enum SimulationMode {
   ELO_REALISTIC = 'EloRealistic',
   ELO_ADVANCED = 'EloAdvanced'
 }
+export interface SimulationFactors {
+  weather?: 'clear' | 'rain' | 'snow' | string;
+  homeAdvantage?: boolean;
+  importance?: number; // match importance or tournament weight
+  [key: string]: unknown;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -29,7 +35,7 @@ export class SimulationModeService {
   /**
    * Simulate a match using the currently selected mode
    */
-  simulateMatch(teamA: Team, teamB: Team, situationalFactors?: any): Observable<{ scoreA: number, scoreB: number }> {
+  simulateMatch(teamA: Team, teamB: Team, situationalFactors?: SimulationFactors): Observable<{ scoreA: number, scoreB: number }> {
     const serverMode = this.mapToServerMode(this.currentMode);
     return this.serverSimulation.simulateMatchWithMode(teamA, teamB, serverMode);
   }

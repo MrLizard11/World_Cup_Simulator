@@ -242,15 +242,7 @@ export class KnockoutStageService {
         winner: ''
       });
 
-      console.log('🏆 FIFA-style Round of 16 Draw:');
-      console.log('Left Bracket:');
-      this.leftBracketRoundOf16.forEach((match, index) => {
-        console.log(`  Match ${index + 1}: ${match.teamA.name} vs ${match.teamB.name}`);
-      });
-      console.log('Right Bracket:');
-      this.rightBracketRoundOf16.forEach((match, index) => {
-        console.log(`  Match ${index + 5}: ${match.teamA.name} vs ${match.teamB.name}`);
-      });
+      // Round of 16 matches drawn; brackets initialized
 
     } catch (error) {
       console.error('Error drawing Round of 16 matches:', error);
@@ -503,7 +495,7 @@ export class KnockoutStageService {
       // Draw the round of 16 matches using the loaded teams
       this.drawRoundOf16Matches(this.top16);
     } else {
-      console.error('Not enough teams loaded for knockout stage. Found:', this.top16.length);
+      console.error(`Not enough teams loaded for knockout stage. Found: ${this.top16.length}`);
     }
 
     // Return the initialized state

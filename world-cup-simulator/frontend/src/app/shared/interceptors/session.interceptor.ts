@@ -18,8 +18,7 @@ export class SessionInterceptor implements HttpInterceptor {
         headers: req.headers.set('X-Session-Id', sessionId)
       });
 
-      console.log(`API Request to ${req.url} with session: ${sessionId.substring(0, 8)}...`);
-      
+  // Request includes session header; no debug logging to avoid leaking identifiers
       return next.handle(sessionReq);
     }
 
