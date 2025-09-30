@@ -1,10 +1,10 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef, inject } from '@angular/core';
 import { Team } from '../models';
 import { KnockoutMatch } from '../models/knockouts.model';
 import { Router } from '@angular/router';
 import { TournamentStateService, TournamentState } from './tournament-state.service';
 import { TournamentStatisticsService } from './tournament-statistics.service';
-import { Subscription } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TournamentStats, TeamPerformance, ChampionJourney } from '../models/tournament-stats';
 
 @Component({
@@ -15,7 +15,7 @@ import { TournamentStats, TeamPerformance, ChampionJourney } from '../models/tou
 export class SummaryPageComponent implements OnInit, OnDestroy {
 
   tournamentState: TournamentState | null = null;
-  private subscription: Subscription = new Subscription();
+  private readonly destroyRef = inject(DestroyRef);
 
   champion: Team | null = null;
   runnerUp: Team | null = null;
@@ -51,16 +51,16 @@ export class SummaryPageComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
-    this.subscription.add(
-      this.tournamentStateService.getTournamentState().subscribe(state => {
+    this.tournamentStateService.getTournamentState()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(state => {
         this.tournamentState = state;
         this.updateDisplayData();
-      })
-    );
+      });
   }
 
   ngOnDestroy(): void {
-    this.subscription.unsubscribe();
+    // takeUntilDestroyed handles unsubscription automatically
   }
 
   updateDisplayData(): void {
