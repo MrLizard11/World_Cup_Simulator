@@ -1,0 +1,54 @@
+<!--
+Session Status Component
+Displays current multi-user session information and provides session management controls
+-->
+<div class="session-status">
+  <div class="session-info">
+    <h4>🔧 Multi-User Session</h4>
+    
+    <div class="session-id-display">
+      <span class="label">Session ID:</span>
+      <code class="session-id">{{ displaySessionId }}</code>
+      <button 
+        class="copy-btn" 
+        (click)="copySessionId()" 
+        title="Copy full session ID"
+        aria-label="Copy session ID">
+        📋
+      </button>
+    </div>
+    
+    <div class="session-actions">
+      <button 
+        class="btn btn-new-session" 
+        (click)="createNewSession()"
+        title="Create a new isolated session">
+        🔄 New Session
+      </button>
+      
+      <button 
+        class="btn btn-test-api" 
+        (click)="testApi()" 
+        [disabled]="isTestingApi"
+        title="Test API connectivity">
+        {{ isTestingApi ? '⏳' : '🧪' }} Test API
+      </button>
+      
+      <button 
+        class="btn btn-reset" 
+        (click)="resetTournament()" 
+        [disabled]="isResetting"
+        title="Reset tournament data for this session">
+        {{ isResetting ? '⏳' : '🗑️' }} Reset Tournament
+      </button>
+    </div>
+    
+    <div 
+      class="status-message" 
+      [ngClass]="statusClass" 
+      *ngIf="statusMessage"
+      role="alert">
+      {{ statusMessage }}
+    </div>
+  </div>
+</div>

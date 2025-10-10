@@ -15,12 +15,16 @@ public class TournamentService : ITournamentService
         _context = context;
     }
 
-    public async Task<Result<TournamentStatisticsResponse>> GetTournamentStatisticsAsync()
+    public async Task<Result<TournamentStatisticsResponse>> GetTournamentStatisticsAsync(string sessionId)
     {
+        // Validate session ID
+        if (string.IsNullOrWhiteSpace(sessionId))
+            return Result.Failure<TournamentStatisticsResponse>(new Error("InvalidSessionId", "Session ID is required"));
+
         var allMatches = await _context.Matches
             .Include(m => m.TeamA)
             .Include(m => m.TeamB)
-            .Where(m => m.Played)
+            .Where(m => m.SessionId == sessionId && m.Played)
             .ToListAsync();
 
         var totalGoals = allMatches.Sum(m => m.ScoreA + m.ScoreB);
@@ -56,10 +60,12 @@ public class TournamentService : ITournamentService
         // Count penalty shootouts
         var penaltyShootouts = await _context.Matches
             .OfType<KnockoutMatch>()
-            .Where(m => m.WentToPenalties)
+            .Where(m => m.SessionId == sessionId && m.WentToPenalties)
             .CountAsync();
 
-        var allMatchesCount = await _context.Matches.CountAsync();
+        var allMatchesCount = await _context.Matches
+            .Where(m => m.SessionId == sessionId)
+            .CountAsync();
 
         var statistics = new TournamentStatisticsResponse
         {
@@ -75,15 +81,21 @@ public class TournamentService : ITournamentService
         return Result.Success(statistics);
     }
 
-    public async Task<Result<List<TeamPerformanceResponse>>> GetTeamPerformancesAsync()
+    public async Task<Result<List<TeamPerformanceResponse>>> GetTeamPerformancesAsync(string sessionId)
     {
-        var teams = await _context.Teams.ToListAsync();
+        // Validate session ID
+        if (string.IsNullOrWhiteSpace(sessionId))
+            return Result.Failure<List<TeamPerformanceResponse>>(new Error("InvalidSessionId", "Session ID is required"));
+
+        var teams = await _context.Teams
+            .Where(t => t.SessionId == sessionId)
+            .ToListAsync();
         var performances = new List<TeamPerformanceResponse>();
 
         foreach (var team in teams)
         {
             var teamMatches = await _context.Matches
-                .Where(m => m.Played && (m.TeamAId == team.Id || m.TeamBId == team.Id))
+                .Where(m => m.SessionId == sessionId && m.Played && (m.TeamAId == team.Id || m.TeamBId == team.Id))
                 .Include(m => m.TeamA)
                 .Include(m => m.TeamB)
                 .ToListAsync();
@@ -106,30 +118,46 @@ public class TournamentService : ITournamentService
         return Result.Success(performances);
     }
 
-    public async Task<Result> ResetTournamentAsync()
+    public async Task<Result> ResetTournamentAsync(string sessionId)
     {
-        // Delete all matches
-        var matches = await _context.Matches.ToListAsync();
+        // Validate session ID
+        if (string.IsNullOrWhiteSpace(sessionId))
+            return Result.Failure(new Error("InvalidSessionId", "Session ID is required"));
+
+        // Delete only matches for this session
+        var matches = await _context.Matches
+            .Where(m => m.SessionId == sessionId)
+            .ToListAsync();
         _context.Matches.RemoveRange(matches);
 
-        // Delete all group teams
-        var groupTeams = await _context.GroupTeams.ToListAsync();
+        // Delete only group teams for this session
+        var groupTeams = await _context.GroupTeams
+            .Where(gt => gt.Group.SessionId == sessionId)
+            .ToListAsync();
         _context.GroupTeams.RemoveRange(groupTeams);
 
-        // Delete all groups
-        var groups = await _context.Groups.ToListAsync();
+        // Delete only groups for this session
+        var groups = await _context.Groups
+            .Where(g => g.SessionId == sessionId)
+            .ToListAsync();
         _context.Groups.RemoveRange(groups);
 
-        // Delete all teams
-        var teams = await _context.Teams.ToListAsync();
+        // Delete only teams for this session
+        var teams = await _context.Teams
+            .Where(t => t.SessionId == sessionId)
+            .ToListAsync();
         _context.Teams.RemoveRange(teams);
 
         await _context.SaveChangesAsync();
         return Result.Success();
     }
 
-    public async Task<Result<List<TeamResponse>>> BulkCreateTeamsAsync(BulkCreateTeamsRequest request)
+    public async Task<Result<List<TeamResponse>>> BulkCreateTeamsAsync(BulkCreateTeamsRequest request, string sessionId)
     {
+        // Validate session ID
+        if (string.IsNullOrWhiteSpace(sessionId))
+            return Result.Failure<List<TeamResponse>>(new Error("InvalidSessionId", "Session ID is required"));
+
         var teams = new List<Team>();
         var responses = new List<TeamResponse>();
 
@@ -137,6 +165,7 @@ public class TournamentService : ITournamentService
         {
             var team = new Team
             {
+                SessionId = sessionId,
                 Name = teamRequest.Name,
                 Country = teamRequest.Country,
                 Elo = teamRequest.Elo,
@@ -156,14 +185,18 @@ public class TournamentService : ITournamentService
         return Result.Success(responses);
     }
 
-    public async Task<Result<List<GroupResponse>>> BulkCreateGroupsAsync(BulkCreateGroupsRequest request)
+    public async Task<Result<List<GroupResponse>>> BulkCreateGroupsAsync(BulkCreateGroupsRequest request, string sessionId)
     {
+        // Validate session ID
+        if (string.IsNullOrWhiteSpace(sessionId))
+            return Result.Failure<List<GroupResponse>>(new Error("InvalidSessionId", "Session ID is required"));
+
         var groups = new List<Group>();
         var responses = new List<GroupResponse>();
 
         foreach (var groupName in request.GroupNames)
         {
-            var group = new Group { Name = groupName };
+            var group = new Group { SessionId = sessionId, Name = groupName };
             groups.Add(group);
         }
 
@@ -183,7 +216,7 @@ public class TournamentService : ITournamentService
         return Result.Success(responses);
     }
 
-    public async Task<Result<List<TeamResponse>>> PopulateDefaultTeamsAsync(PopulateDefaultTeamsRequest request)
+    public async Task<Result<List<TeamResponse>>> PopulateDefaultTeamsAsync(PopulateDefaultTeamsRequest request, string sessionId)
     {
         var defaultTeams = new List<CreateTeamRequest>
         {
@@ -223,15 +256,20 @@ public class TournamentService : ITournamentService
         };
 
         var bulkRequest = new BulkCreateTeamsRequest { Teams = defaultTeams };
-        return await BulkCreateTeamsAsync(bulkRequest);
+        return await BulkCreateTeamsAsync(bulkRequest, sessionId);
     }
 
-    public async Task<Result<KnockoutBracketResponse>> GenerateKnockoutBracketAsync(GenerateKnockoutBracketRequest request)
+    public async Task<Result<KnockoutBracketResponse>> GenerateKnockoutBracketAsync(GenerateKnockoutBracketRequest request, string sessionId)
     {
+        // Validate session ID
+        if (string.IsNullOrWhiteSpace(sessionId))
+            return Result.Failure<KnockoutBracketResponse>(new Error("InvalidSessionId", "Session ID is required"));
+
         if (request.AutoFillFromGroupWinners)
         {
             // Get qualified teams (top 2 from each group)
             var groups = await _context.Groups
+                .Where(g => g.SessionId == sessionId)
                 .Include(g => g.Teams)
                     .ThenInclude(gt => gt.Team)
                 .Include(g => g.Matches)
@@ -245,10 +283,15 @@ public class TournamentService : ITournamentService
         return Result.Success(new KnockoutBracketResponse());
     }
 
-    public async Task<Result<KnockoutBracketResponse>> GetKnockoutBracketAsync()
+    public async Task<Result<KnockoutBracketResponse>> GetKnockoutBracketAsync(string sessionId)
     {
+        // Validate session ID
+        if (string.IsNullOrWhiteSpace(sessionId))
+            return Result.Failure<KnockoutBracketResponse>(new Error("InvalidSessionId", "Session ID is required"));
+
         var knockoutMatches = await _context.Matches
             .OfType<KnockoutMatch>()
+            .Where(m => m.SessionId == sessionId)
             .Include(m => m.TeamA)
             .Include(m => m.TeamB)
             .ToListAsync();

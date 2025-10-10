@@ -1,8 +1,11 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef, inject } from '@angular/core';
 import { Team } from '../models';
 import { KnockoutMatch } from '../models/knockouts.model';
 import { KnockoutStageService } from './knockout-stage.service';
 import { SimulationMode } from '../shared/services/simulation-mode.service';
+import { Observable, forkJoin, of, EMPTY } from 'rxjs';
+import { switchMap, tap, take, catchError } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-knockout-stage',
@@ -18,6 +21,7 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
   thirdPlaceSimulated: boolean = false;
   finalSimulated: boolean = false;
   allMatchesSimulated: boolean = false;
+  private readonly destroyRef = inject(DestroyRef);
 
   constructor(private knockoutStageService: KnockoutStageService) { }
 
@@ -67,136 +71,156 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    try {
-      // Scroll to top when component initializes
-      window.scrollTo(0, 0);
+    // Scroll to top when component initializes
+    window.scrollTo(0, 0);
 
-      // Initialize knockout stage through service
-      const initialState = this.knockoutStageService.initializeKnockoutStage();
-      
-      // Set initial round completion status
-      const status = initialState.roundCompletionStatus;
-      this.roundOf16Simulated = status.roundOf16Simulated;
-      this.quarterFinalsSimulated = status.quarterFinalsSimulated;
-      this.semiFinalsSimulated = status.semiFinalsSimulated;
-      this.finalSimulated = status.finalSimulated;
-      this.allMatchesSimulated = status.allMatchesSimulated;
+    const initialState = this.knockoutStageService.initializeKnockoutStage();
+    const status = initialState.roundCompletionStatus;
+    this.roundOf16Simulated = status.roundOf16Simulated;
+    this.quarterFinalsSimulated = status.quarterFinalsSimulated;
+    this.semiFinalsSimulated = status.semiFinalsSimulated;
+    this.finalSimulated = status.finalSimulated;
+    this.allMatchesSimulated = status.allMatchesSimulated;
 
-      // Check initial round completion status from service
-      this.updateRoundCompletionFromService();
-    } catch (error) {
-      console.error('Error initializing knockout stage:', error);
-      // Could navigate back to group stage or show error message
-    }
+    this.updateRoundCompletionFromService();
   }
 
   simulateMatch(match: KnockoutMatch) {
-    try {
-      this.knockoutStageService.simulateMatch(match);
-
-      // Check if any rounds have been completed through individual match simulation
-      this.updateRoundCompletionFromService();
-    } catch (error) {
-      console.error('Error simulating knockout match:', error);
-      // Reset match state on error
-      match.played = false;
-      match.winner = '';
-    }
+    this.knockoutStageService
+      .simulateMatch(match)
+      .pipe(
+        take(1),
+        catchError(() => {
+          // Reset match state on error and return EMPTY to stop the stream
+          match.played = false;
+          match.winner = '';
+          return EMPTY;
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => this.updateRoundCompletionFromService());
   }
 
   onSimulationModeChanged(mode: SimulationMode): void {
-    console.log('Simulation mode changed to:', mode);
-    // The mode is automatically updated in the service, no additional action needed
+    // The mode is automatically updated in the service
   }
 
   runAllRoundOf16() {
     if (this.roundOf16Simulated) return;
 
-    try {
-      this.leftBracketRoundOf16.forEach(match => {
-        if (!match.played) {
-          this.simulateMatch(match);
-        }
+    const roundOf16Matches = [
+      ...this.leftBracketRoundOf16.filter(match => !match.played),
+      ...this.rightBracketRoundOf16.filter(match => !match.played)
+    ];
+
+    this.simulateMatchesInParallel(roundOf16Matches)
+      .pipe(
+        take(1),
+        catchError((error) => {
+          console.error('Error running Round of 16:', error);
+          this.roundOf16Simulated = false;
+          return EMPTY;
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => {
+        this.knockoutStageService.checkAndAdvanceToQuarterFinals();
+        this.roundOf16Simulated = true;
+        this.updateRoundCompletionFromService();
       });
-      this.rightBracketRoundOf16.forEach(match => {
-        if (!match.played) {
-          this.simulateMatch(match);
-        }
-      });
-      this.knockoutStageService.checkAndAdvanceToQuarterFinals();
-      this.roundOf16Simulated = true;
-    } catch (error) {
-      console.error('Error running Round of 16:', error);
-      // Reset simulation status on error
-      this.roundOf16Simulated = false;
-    }
   }
-  
+
   runQuarterFinals() {
     if (this.quarterFinalsSimulated || !this.areAllRoundOf16MatchesPlayed()) return;
 
-    try {
-      this.leftBracketQuarterFinals.forEach(match => {
-        if (!match.played) {
-          this.simulateMatch(match);
-        }
+    const quarterFinalMatches = [
+      ...this.leftBracketQuarterFinals.filter(match => !match.played),
+      ...this.rightBracketQuarterFinals.filter(match => !match.played)
+    ];
+
+    this.simulateMatchesInParallel(quarterFinalMatches)
+      .pipe(
+        take(1),
+        catchError((error) => {
+          console.error('Error running Quarter Finals:', error);
+          this.quarterFinalsSimulated = false;
+          return EMPTY;
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => {
+        this.knockoutStageService.checkAndAdvanceToSemiFinals();
+        this.quarterFinalsSimulated = true;
+        this.updateRoundCompletionFromService();
       });
-      this.rightBracketQuarterFinals.forEach(match => {
-        if (!match.played) {
-          this.simulateMatch(match);
-        }
-      });
-      this.knockoutStageService.checkAndAdvanceToSemiFinals();
-      this.quarterFinalsSimulated = true;
-    } catch (error) {
-      console.error('Error running Quarter Finals:', error);
-      this.quarterFinalsSimulated = false;
-    }
   }
 
   runSemiFinals() {
     if (this.semiFinalsSimulated || !this.areAllQuarterFinalMatchesPlayed()) return;
 
-    try {
-      if (this.leftBracketSemiFinal && !this.leftBracketSemiFinal.played) {
-        this.simulateMatch(this.leftBracketSemiFinal);
-      }
-      if (this.rightBracketSemiFinal && !this.rightBracketSemiFinal.played) {
-        this.simulateMatch(this.rightBracketSemiFinal);
-      }
-      this.knockoutStageService.checkAndAdvanceToFinals();
-      this.semiFinalsSimulated = true;
-    } catch (error) {
-      console.error('Error running Semi Finals:', error);
-      this.semiFinalsSimulated = false;
-    }
+    const semiFinalMatches = [
+      this.leftBracketSemiFinal,
+      this.rightBracketSemiFinal
+    ].filter(match => match && !match.played) as KnockoutMatch[];
+
+    this.simulateMatchesInParallel(semiFinalMatches)
+      .pipe(
+        take(1),
+        catchError((error) => {
+          console.error('Error running Semi Finals:', error);
+          this.semiFinalsSimulated = false;
+          return EMPTY;
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => {
+        this.knockoutStageService.checkAndAdvanceToFinals();
+        this.semiFinalsSimulated = true;
+        this.updateRoundCompletionFromService();
+      });
   }
 
   runThirdPlace() {
     if (this.thirdPlaceSimulated || !this.areAllSemiFinalMatchesPlayed()) return;
 
-    try {
-      if (this.thirdPlaceMatch && !this.thirdPlaceMatch.played) {
-        this.simulateMatch(this.thirdPlaceMatch);
-      }
-      this.thirdPlaceSimulated = true;
-    } catch (error) {
-      console.error('Error running Third Place match:', error);
-      this.thirdPlaceSimulated = false;
+    if (this.thirdPlaceMatch && !this.thirdPlaceMatch.played) {
+      this.knockoutStageService
+        .simulateMatch(this.thirdPlaceMatch)
+        .pipe(
+          take(1),
+          catchError((error) => {
+            console.error('Error running Third Place match:', error);
+            this.thirdPlaceSimulated = false;
+            return EMPTY;
+          }),
+          takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe(() => {
+          this.thirdPlaceSimulated = true;
+          this.updateRoundCompletionFromService();
+        });
     }
   }
 
   runFinal() {
     if (this.finalSimulated || !this.areAllSemiFinalMatchesPlayed() || !this.thirdPlaceSimulated) return;
 
-    try {
-      if (this.finalMatch && !this.finalMatch.played) {
-        this.simulateMatch(this.finalMatch);
-      }
-      this.finalSimulated = true;
-    } catch (error) {
-      console.error('Error running Final:', error);
-      this.finalSimulated = false;
+    if (this.finalMatch && !this.finalMatch.played) {
+      this.knockoutStageService
+        .simulateMatch(this.finalMatch)
+        .pipe(
+          take(1),
+          catchError((error) => {
+            console.error('Error running Final:', error);
+            this.finalSimulated = false;
+            return EMPTY;
+          }),
+          takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe(() => {
+          this.finalSimulated = true;
+          this.updateRoundCompletionFromService();
+        });
     }
   }
 
@@ -204,61 +228,71 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
   runAllMatches() {
     if (this.allMatchesSimulated) return;
 
-    try {
-      this.leftBracketRoundOf16.forEach(match => {
-        if (!match.played) {
-          this.simulateMatch(match);
-        }
+    // Simulate Round of 16 matches
+    const roundOf16Matches = [
+      ...this.leftBracketRoundOf16.filter(match => !match.played),
+      ...this.rightBracketRoundOf16.filter(match => !match.played)
+    ];
+
+    // Compose the full sequence: Round of 16 -> Quarter Finals -> Semi Finals -> Final/Third-place
+    const composed$ = this.simulateMatchesInParallel(roundOf16Matches)
+      .pipe(
+        tap(() => {
+          this.knockoutStageService.checkAndAdvanceToQuarterFinals();
+          this.roundOf16Simulated = true;
+        }),
+        switchMap(() => {
+          // Simulate Quarter Finals matches
+          const quarterFinalMatches = [
+            ...this.leftBracketQuarterFinals.filter(match => !match.played),
+            ...this.rightBracketQuarterFinals.filter(match => !match.played)
+          ];
+          return this.simulateMatchesInParallel(quarterFinalMatches);
+        }),
+        tap(() => {
+          this.knockoutStageService.checkAndAdvanceToSemiFinals();
+          this.quarterFinalsSimulated = true;
+        }),
+        switchMap(() => {
+          // Simulate Semi Finals matches
+          const semiFinalMatches = [
+            this.leftBracketSemiFinal,
+            this.rightBracketSemiFinal
+          ].filter(match => match && !match.played) as KnockoutMatch[];
+          return this.simulateMatchesInParallel(semiFinalMatches);
+        }),
+        tap(() => {
+          this.knockoutStageService.checkAndAdvanceToFinals();
+          this.semiFinalsSimulated = true;
+        }),
+        switchMap(() => {
+          // Simulate third place match and final
+          const finalMatches = [];
+          if (this.thirdPlaceMatch && !this.thirdPlaceMatch.played) {
+            finalMatches.push(this.thirdPlaceMatch);
+          }
+          if (this.finalMatch && !this.finalMatch.played) {
+            finalMatches.push(this.finalMatch);
+          }
+          return this.simulateMatchesInParallel(finalMatches);
+        }),
+        catchError((error) => {
+          console.error('Error running all knockout matches:', error);
+          this.allMatchesSimulated = false;
+          return EMPTY;
+        }),
+        take(1)
+      );
+
+    // Subscribe to the composed observable so the whole sequence runs
+    composed$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.allMatchesSimulated = true;
+        this.thirdPlaceSimulated = true;
+        this.finalSimulated = true;
+        this.updateRoundCompletionFromService();
       });
-      this.rightBracketRoundOf16.forEach(match => {
-        if (!match.played) {
-          this.simulateMatch(match);
-        }
-      });
-      this.knockoutStageService.checkAndAdvanceToQuarterFinals();
-
-      this.leftBracketQuarterFinals.forEach(match => {
-        if (!match.played) {
-          this.simulateMatch(match);
-        }
-      });
-      this.rightBracketQuarterFinals.forEach(match => {
-        if (!match.played) {
-          this.simulateMatch(match);
-        }
-      });
-      this.knockoutStageService.checkAndAdvanceToSemiFinals();
-
-      if (this.leftBracketSemiFinal && !this.leftBracketSemiFinal.played) {
-        this.simulateMatch(this.leftBracketSemiFinal);
-      }
-      if (this.rightBracketSemiFinal && !this.rightBracketSemiFinal.played) {
-        this.simulateMatch(this.rightBracketSemiFinal);
-      }
-      this.knockoutStageService.checkAndAdvanceToFinals();
-
-      // Simulate third place match
-      if (this.thirdPlaceMatch && !this.thirdPlaceMatch.played) {
-        this.simulateMatch(this.thirdPlaceMatch);
-      }
-
-      // Only simulate final after third place is complete
-      if (this.finalMatch && !this.finalMatch.played && this.thirdPlaceMatch?.played) {
-        this.simulateMatch(this.finalMatch);
-      }
-
-      // Set all flags to true when all matches are simulated
-      this.allMatchesSimulated = true;
-      this.roundOf16Simulated = true;
-      this.quarterFinalsSimulated = true;
-      this.semiFinalsSimulated = true;
-      this.thirdPlaceSimulated = true;
-      this.finalSimulated = true;
-    } catch (error) {
-      console.error('Error running all knockout matches:', error);
-      // Reset simulation status on error
-      this.allMatchesSimulated = false;
-    }
   }
 
   isWinner(match: KnockoutMatch, team: 'A' | 'B'): boolean {
@@ -385,5 +419,18 @@ export class KnockoutStageComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Error during knockout stage cleanup:', error);
     }
+  }
+
+  // Helper method to simulate multiple matches in parallel
+  private simulateMatchesInParallel(matches: KnockoutMatch[]): Observable<void[]> {
+    if (matches.length === 0) {
+      return of([]);
+    }
+
+    const simulationObservables = matches.map(match => 
+      this.knockoutStageService.simulateMatch(match)
+    );
+
+    return forkJoin(simulationObservables);
   }
 }

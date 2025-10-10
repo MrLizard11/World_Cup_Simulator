@@ -33,6 +33,10 @@ namespace WorldCupSimulator.Api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("SessionId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.ToTable("Groups");
@@ -121,6 +125,10 @@ namespace WorldCupSimulator.Api.Migrations
                     b.Property<int>("ScoreB")
                         .HasColumnType("int");
 
+                    b.Property<string>("SessionId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("TeamAId")
                         .HasColumnType("int");
 
@@ -165,6 +173,10 @@ namespace WorldCupSimulator.Api.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SessionId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

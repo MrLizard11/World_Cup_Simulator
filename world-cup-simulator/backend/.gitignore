@@ -63,6 +63,16 @@ artifacts/
 *.ldf
 *.ndf
 
+# SQLite database files
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+
+# Local development database
+localdb/
+
 # Local development settings
 appsettings.Local.json
 *.Local.json
@@ -83,3 +93,8 @@ _ReSharper*/
 *.postman_collection.json
 World_Cup_Full_Tournament_Tests.postman_collection.json
 WorldCup_Simulator_API_Tests.postman_collection.json
+
+# Entity Framework Migrations
+**/Migrations/*
+# Keep model snapshot for schema reference
+!**/Migrations/WorldCupContextModelSnapshot.cs

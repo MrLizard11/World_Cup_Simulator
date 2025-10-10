@@ -44,14 +44,13 @@
         <div class="start-button" *ngIf="selectedTeams.length > 0">
             <button 
                 (click)="startTournament()" 
-                class="btn-start">
-                <a routerLink="/group-stage" routerLinkActive="active">
-                    Start Tournament
-                </a>
-                <span *ngIf="selectedTeams.length !== 32">
-                    ({{ 32 - selectedTeams.length }} more teams needed)
-                </span>
+                class="btn-start"
+                [disabled]="selectedTeams.length !== 32">
+                Start Tournament
             </button>
+            <span *ngIf="selectedTeams.length !== 32" class="teams-needed">
+                ({{ 32 - selectedTeams.length }} more teams needed)
+            </span>
         </div>
     </div>
     

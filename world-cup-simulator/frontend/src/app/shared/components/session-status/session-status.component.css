@@ -1,0 +1,195 @@
+/* Session Status Component Styles */
+
+.session-status {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.session-info h4 {
+  margin: 0 0 12px 0;
+  color: #495057;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.session-id-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 16px 0;
+  flex-wrap: wrap;
+}
+
+.label {
+  font-weight: 500;
+  color: #495057;
+}
+
+.session-id {
+  background: #e9ecef;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: 'Courier New', 'Monaco', monospace;
+  font-size: 12px;
+  color: #495057;
+  letter-spacing: 0.5px;
+}
+
+.copy-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  font-size: 14px;
+}
+
+.copy-btn:hover {
+  background: #e9ecef;
+}
+
+.copy-btn:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+.session-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 8px 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  min-height: 38px;
+}
+
+.btn:hover:not(:disabled) {
+  background: #e9ecef;
+  transform: translateY(-1px);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+.btn-new-session {
+  border-color: #007bff;
+  color: #007bff;
+}
+
+.btn-new-session:hover:not(:disabled) {
+  background: #e3f2fd;
+}
+
+.btn-test-api {
+  border-color: #28a745;
+  color: #28a745;
+}
+
+.btn-test-api:hover:not(:disabled) {
+  background: #e8f5e8;
+}
+
+.btn-reset {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.btn-reset:hover:not(:disabled) {
+  background: #fdeaea;
+}
+
+.status-message {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.status-success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.status-error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.status-info {
+  background: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .session-status {
+    margin: 8px 0;
+    padding: 12px;
+  }
+  
+  .session-actions {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .session-id-display {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+/* Material snack bar panel classes used by session-status component */
+.mat-snackbar-success {
+  background-color: #4caf50 !important; /* green */
+  color: white !important;
+}
+
+.mat-snackbar-error {
+  background-color: #f44336 !important; /* red */
+  color: white !important;
+}
+
+.mat-snackbar-info {
+  background-color: #2196f3 !important; /* blue */
+  color: white !important;
+}

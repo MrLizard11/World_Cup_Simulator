@@ -3,6 +3,7 @@ namespace WorldCupSimulator.Api.Models;
 public abstract class Match
 {
     public int Id { get; set; }
+    public string SessionId { get; set; } = string.Empty;
     public int? GroupId { get; set; }
     public int TeamAId { get; set; }
     public int TeamBId { get; set; }

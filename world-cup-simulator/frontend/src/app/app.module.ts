@@ -1,6 +1,10 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { CommonModule } from '@angular/common';
+import { SessionInterceptor } from './shared/interceptors/session.interceptor';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -46,6 +50,8 @@ import { ModeDescriptionInfoComponent } from './shared/components/simulation-inf
 import { TechnicalInfoComponent } from './shared/components/simulation-info-popup/mode-section/technical-info';
 import { ExampleSectionComponent } from './shared/components/simulation-info-popup/mode-section/example-section';
 import { ProsConsComponent } from './shared/components/simulation-info-popup/mode-section/pros-cons';
+import { SessionStatusComponent } from './shared/components/session-status/session-status.component';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 
 @NgModule({
@@ -93,14 +99,25 @@ import { ProsConsComponent } from './shared/components/simulation-info-popup/mod
     TechnicalInfoComponent,
     ExampleSectionComponent,
     ProsConsComponent,
+    SessionStatusComponent,
   ],
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,
+    CommonModule,
     AppRoutingModule,
     ReactiveFormsModule,
-    FormsModule
+    FormsModule,
+    HttpClientModule
+    ,MatSnackBarModule
   ],
-  providers: [],
+  providers: [
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: SessionInterceptor,
+      multi: true
+    }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
