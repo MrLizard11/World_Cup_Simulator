@@ -1,0 +1,305 @@
+# Azure DevOps CI/CD Pipeline for World Cup Simulator
+# This pipeline builds both frontend (Angular) and backend (.NET), runs tests, and deploys to Azure
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - frontend/*
+      - backend/*
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+
+variables:
+  # Build configuration
+  buildConfiguration: 'Release'
+  nodeVersion: '20.x'
+  dotnetVersion: '9.0.x'
+  
+  # Azure resource names (update these with your actual resource names)
+  azureSubscription: 'your-azure-subscription-connection'  # Service connection name
+  frontendAppName: 'worldcup-simulator-frontend'           # Azure Static Web App or App Service
+  backendAppName: 'worldcup-simulator-backend'             # Azure App Service
+  resourceGroupName: 'rg-worldcup-simulator'
+  sqlServerName: 'sql-worldcup-simulator'
+  sqlDatabaseName: 'worldcup-db'
+  
+  # Environment-specific API URLs
+  ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+    apiUrl: 'https://worldcup-simulator-backend.azurewebsites.net'
+    environmentName: 'Production'
+  ${{ else }}:
+    apiUrl: 'https://worldcup-simulator-backend-dev.azurewebsites.net'
+    environmentName: 'Development'
+
+stages:
+  # ============================================
+  # STAGE 1: BUILD & TEST
+  # ============================================
+  - stage: Build
+    displayName: 'Build and Test'
+    jobs:
+      # Frontend Build Job
+      - job: BuildFrontend
+        displayName: 'Build Angular Frontend'
+        pool:
+          vmImage: 'windows-latest'
+        steps:
+          - task: NodeTool@0
+            displayName: 'Install Node.js'
+            inputs:
+              versionSpec: $(nodeVersion)
+
+          - task: Npm@1
+            displayName: 'npm install'
+            inputs:
+              command: 'install'
+              workingDir: 'frontend'
+
+          - task: PowerShell@2
+            displayName: 'Build and configure frontend'
+            inputs:
+              targetType: 'filePath'
+              filePath: 'frontend/deploy.ps1'
+              arguments: '-ApiUrl "$(apiUrl)"'
+              workingDirectory: 'frontend'
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish frontend artifact'
+            inputs:
+              PathtoPublish: 'frontend/dist/world-cup-simulator'
+              ArtifactName: 'frontend-drop'
+              publishLocation: 'Container'
+
+      # Backend Build Job
+      - job: BuildBackend
+        displayName: 'Build .NET Backend'
+        pool:
+          vmImage: 'windows-latest'
+        steps:
+          - task: UseDotNet@2
+            displayName: 'Install .NET SDK'
+            inputs:
+              version: $(dotnetVersion)
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Restore NuGet packages'
+            inputs:
+              command: 'restore'
+              projects: 'backend/**/*.csproj'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Build backend'
+            inputs:
+              command: 'build'
+              projects: 'backend/**/*.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Run backend tests'
+            inputs:
+              command: 'test'
+              projects: 'backend/**/*Tests.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-build --collect:"XPlat Code Coverage"'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Publish backend'
+            inputs:
+              command: 'publish'
+              publishWebProjects: false
+              projects: 'backend/WorldCupSimulator.Api/WorldCupSimulator.Api.csproj'
+              arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/backend'
+              zipAfterPublish: true
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish backend artifact'
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/backend'
+              ArtifactName: 'backend-drop'
+              publishLocation: 'Container'
+
+  # ============================================
+  # STAGE 2: DEPLOY TO AZURE
+  # ============================================
+  - stage: Deploy
+    displayName: 'Deploy to Azure'
+    dependsOn: Build
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.SourceBranch'], 'refs/heads/develop')))
+    jobs:
+      # Database Migration Job
+      - job: DatabaseMigration
+        displayName: 'Apply Database Migrations'
+        pool:
+          vmImage: 'windows-latest'
+        steps:
+          - task: UseDotNet@2
+            displayName: 'Install .NET SDK'
+            inputs:
+              version: $(dotnetVersion)
+
+          - task: PowerShell@2
+            displayName: 'Install EF Core tools'
+            inputs:
+              targetType: 'inline'
+              script: |
+                dotnet tool install --global dotnet-ef
+                dotnet ef --version
+
+          - task: AzureCLI@2
+            displayName: 'Get SQL connection string'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              scriptType: 'ps'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                $connectionString = az sql db show-connection-string `
+                  --client ado.net `
+                  --server $(sqlServerName) `
+                  --name $(sqlDatabaseName) `
+                  --output tsv
+                
+                Write-Host "##vso[task.setvariable variable=ConnectionString;issecret=true]$connectionString"
+
+          - task: PowerShell@2
+            displayName: 'Apply EF Core migrations'
+            inputs:
+              targetType: 'inline'
+              script: |
+                cd backend/WorldCupSimulator.Api
+                dotnet ef database update --connection "$(ConnectionString)" --verbose
+              workingDirectory: '$(System.DefaultWorkingDirectory)'
+
+      # Backend Deployment Job
+      - job: DeployBackend
+        displayName: 'Deploy Backend to App Service'
+        dependsOn: DatabaseMigration
+        pool:
+          vmImage: 'windows-latest'
+        steps:
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download backend artifact'
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'backend-drop'
+              downloadPath: '$(System.ArtifactsDirectory)'
+
+          - task: AzureRmWebAppDeployment@4
+            displayName: 'Deploy to Azure App Service'
+            inputs:
+              ConnectionType: 'AzureRM'
+              azureSubscription: $(azureSubscription)
+              appType: 'webApp'
+              WebAppName: $(backendAppName)
+              packageForLinux: '$(System.ArtifactsDirectory)/backend-drop/*.zip'
+              RuntimeStack: 'DOTNET|9.0'
+
+          - task: AzureAppServiceSettings@1
+            displayName: 'Configure App Settings'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              appName: $(backendAppName)
+              resourceGroupName: $(resourceGroupName)
+              appSettings: |
+                [
+                  {
+                    "name": "ASPNETCORE_ENVIRONMENT",
+                    "value": "$(environmentName)",
+                    "slotSetting": false
+                  }
+                ]
+
+      # Frontend Deployment Job
+      - job: DeployFrontend
+        displayName: 'Deploy Frontend to Azure'
+        dependsOn: DeployBackend
+        pool:
+          vmImage: 'windows-latest'
+        steps:
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download frontend artifact'
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'frontend-drop'
+              downloadPath: '$(System.ArtifactsDirectory)'
+
+          # Option A: Deploy to Azure Static Web Apps (recommended for Angular)
+          - task: AzureStaticWebApp@0
+            displayName: 'Deploy to Azure Static Web Apps'
+            inputs:
+              app_location: '$(System.ArtifactsDirectory)/frontend-drop'
+              skip_app_build: true
+              azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN)
+
+          # Option B: Deploy to Azure App Service (alternative)
+          # - task: AzureRmWebAppDeployment@4
+          #   displayName: 'Deploy to App Service'
+          #   inputs:
+          #     ConnectionType: 'AzureRM'
+          #     azureSubscription: $(azureSubscription)
+          #     appType: 'webApp'
+          #     WebAppName: $(frontendAppName)
+          #     packageForLinux: '$(System.ArtifactsDirectory)/frontend-drop'
+
+  # ============================================
+  # STAGE 3: SMOKE TESTS (Optional)
+  # ============================================
+  - stage: SmokeTests
+    displayName: 'Post-Deployment Smoke Tests'
+    dependsOn: Deploy
+    condition: succeeded()
+    jobs:
+      - job: RunSmokeTests
+        displayName: 'Run smoke tests'
+        pool:
+          vmImage: 'windows-latest'
+        steps:
+          - task: PowerShell@2
+            displayName: 'Test backend health endpoint'
+            inputs:
+              targetType: 'inline'
+              script: |
+                $backendUrl = "$(apiUrl)/health"
+                Write-Host "Testing backend at: $backendUrl"
+                
+                try {
+                  $response = Invoke-WebRequest -Uri $backendUrl -UseBasicParsing
+                  if ($response.StatusCode -eq 200) {
+                    Write-Host "✓ Backend is healthy" -ForegroundColor Green
+                  } else {
+                    Write-Error "✗ Backend returned status code: $($response.StatusCode)"
+                    exit 1
+                  }
+                } catch {
+                  Write-Error "✗ Failed to reach backend: $_"
+                  exit 1
+                }
+
+          - task: PowerShell@2
+            displayName: 'Test frontend accessibility'
+            inputs:
+              targetType: 'inline'
+              script: |
+                $frontendUrl = "https://$(frontendAppName).azurewebsites.net"
+                Write-Host "Testing frontend at: $frontendUrl"
+                
+                try {
+                  $response = Invoke-WebRequest -Uri $frontendUrl -UseBasicParsing
+                  if ($response.StatusCode -eq 200) {
+                    Write-Host "✓ Frontend is accessible" -ForegroundColor Green
+                  } else {
+                    Write-Error "✗ Frontend returned status code: $($response.StatusCode)"
+                    exit 1
+                  }
+                } catch {
+                  Write-Error "✗ Failed to reach frontend: $_"
+                  exit 1
+                }

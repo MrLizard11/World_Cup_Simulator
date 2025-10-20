@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
+import { RuntimeConfigService } from './runtime-config.service';
 import {
   BulkCreateGroupsRequest,
   BulkCreateTeamsRequest,
@@ -17,9 +19,13 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class TournamentApiService {
-  private readonly baseUrl = 'http://localhost:5134/api/tournament';
+  private readonly baseUrl: string;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private runtimeConfig: RuntimeConfigService) {
+    const runtime = this.runtimeConfig.getConfig();
+    const apiBase = (runtime && runtime.apiUrl) ? runtime.apiUrl : environment.apiUrl;
+    this.baseUrl = `${apiBase}/api/tournament`;
+  }
 
   getTournamentStatistics(): Observable<TournamentStatisticsResponse> {
     return this.http.get<TournamentStatisticsResponse>(`${this.baseUrl}/statistics`).pipe(catchError(this.handleError));

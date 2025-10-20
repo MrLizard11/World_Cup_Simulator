@@ -1,4 +1,6 @@
 <!-- Multi-User Session Status (for testing) -->
-<app-session-status></app-session-status>
+<ng-container *ngIf="!environment.production">
+	<app-session-status></app-session-status>
+</ng-container>
 
 <router-outlet></router-outlet>
