@@ -6,7 +6,9 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "deploy": "pwsh -File deploy.ps1",
+    "deploy:prod": "pwsh -File deploy.ps1 -ApiUrl https://api.yourdomain.com"
   },
   "private": true,
   "dependencies": {

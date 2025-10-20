@@ -22,4 +22,10 @@ logs/
 # Frontend specific ignores are in /frontend/.gitignore
 # Backend specific ignores are in /backend/.gitignore
 
+# Deployment documentation (generated)
+AZURE_DEPLOYMENT.md
+AZURE_QUICKSTART.md
+DEPLOYMENT_INDEX.md
+DEPLOYMENT.md
+
 .fake

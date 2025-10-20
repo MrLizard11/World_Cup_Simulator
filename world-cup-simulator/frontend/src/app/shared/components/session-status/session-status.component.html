@@ -26,7 +26,8 @@ Displays current multi-user session information and provides session management 
         🔄 New Session
       </button>
       
-      <button 
+      <!-- Hide test/reset controls in production -->
+      <button *ngIf="!environment.production"
         class="btn btn-test-api" 
         (click)="testApi()" 
         [disabled]="isTestingApi"
@@ -34,7 +35,7 @@ Displays current multi-user session information and provides session management 
         {{ isTestingApi ? '⏳' : '🧪' }} Test API
       </button>
       
-      <button 
+      <button *ngIf="!environment.production"
         class="btn btn-reset" 
         (click)="resetTournament()" 
         [disabled]="isResetting"

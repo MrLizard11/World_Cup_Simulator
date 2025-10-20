@@ -39,6 +39,14 @@ public static class ApplicationBuilderExtensions
 
         app.UseAuthorization();
         app.MapControllers();
+        
+        // Health check endpoint for monitoring and smoke tests
+        app.MapGet("/health", () => Results.Ok(new
+        {
+            Status = "Healthy",
+            Timestamp = DateTime.UtcNow,
+            Version = "1.0.0"
+        }));
 
         return app;
     }

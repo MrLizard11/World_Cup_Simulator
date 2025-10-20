@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, DestroyRef, inject } from '@angular/core';
+import { environment } from '../../../../environments/environment';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { SessionService } from '../../services/session.service';
@@ -24,6 +25,7 @@ export class SessionStatusComponent implements OnInit, OnDestroy {
   isResetting = false;
 
   private readonly destroyRef = inject(DestroyRef);
+  environment = environment;
 
   constructor(
     private readonly sessionService: SessionService,

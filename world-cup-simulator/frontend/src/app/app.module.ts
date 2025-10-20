@@ -52,6 +52,8 @@ import { ExampleSectionComponent } from './shared/components/simulation-info-pop
 import { ProsConsComponent } from './shared/components/simulation-info-popup/mode-section/pros-cons';
 import { SessionStatusComponent } from './shared/components/session-status/session-status.component';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { APP_INITIALIZER } from '@angular/core';
+import { RuntimeConfigService } from './shared/services/runtime-config.service';
 
 
 @NgModule({
@@ -112,6 +114,12 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
     ,MatSnackBarModule
   ],
   providers: [
+    {
+      provide: APP_INITIALIZER,
+      useFactory: (cfg: RuntimeConfigService) => () => cfg.loadConfig(),
+      deps: [RuntimeConfigService],
+      multi: true
+    },
     {
       provide: HTTP_INTERCEPTORS,
       useClass: SessionInterceptor,
