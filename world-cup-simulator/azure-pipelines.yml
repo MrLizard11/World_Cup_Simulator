@@ -24,20 +24,16 @@ variables:
   dotnetVersion: '9.0.x'
   
   # Azure resource names (update these with your actual resource names)
-  azureSubscription: 'your-azure-subscription-connection'  # Service connection name
-  frontendAppName: 'worldcup-simulator-frontend'           # Azure Static Web App or App Service
-  backendAppName: 'worldcup-simulator-backend'             # Azure App Service
-  resourceGroupName: 'rg-worldcup-simulator'
-  sqlServerName: 'sql-worldcup-simulator'
-  sqlDatabaseName: 'worldcup-db'
+  azureSubscription: 'azure-worldcup-simulator'            # Service connection name
+  frontendAppName: 'worldcup-simulator-frontend-dev'       # Azure Static Web App or App Service
+  backendAppName: 'worldcup-simulator-backend-dev'         # Azure App Service
+  resourceGroupName: 'rg-worldcup-simulator-dev'
+  sqlServerName: 'sql-worldcup-simulator-dev'
+  sqlDatabaseName: 'worldcup-db-dev'
   
-  # Environment-specific API URLs
-  ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
-    apiUrl: 'https://worldcup-simulator-backend.azurewebsites.net'
-    environmentName: 'Production'
-  ${{ else }}:
-    apiUrl: 'https://worldcup-simulator-backend-dev.azurewebsites.net'
-    environmentName: 'Development'
+  # Environment-specific API URLs (currently using dev environment)
+  apiUrl: 'https://worldcup-simulator-backend-dev.azurewebsites.net'
+  environmentName: 'Development'
 
 stages:
   # ============================================
