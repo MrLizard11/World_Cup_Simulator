@@ -18,22 +18,35 @@ pr:
       - develop
 
 variables:
+  - group: worldcup-simulator-secrets  # Variable group containing secrets
+  
   # Build configuration
-  buildConfiguration: 'Release'
-  nodeVersion: '20.x'
-  dotnetVersion: '9.0.x'
+  - name: buildConfiguration
+    value: 'Release'
+  - name: nodeVersion
+    value: '20.x'
+  - name: dotnetVersion
+    value: '9.0.x'
   
-  # Azure resource names (update these with your actual resource names)
-  azureSubscription: 'azure-worldcup-simulator'            # Service connection name
-  frontendAppName: 'worldcup-simulator-frontend-dev'       # Azure Static Web App or App Service
-  backendAppName: 'worldcup-simulator-backend-dev'         # Azure App Service
-  resourceGroupName: 'rg-worldcup-simulator-dev'
-  sqlServerName: 'sql-worldcup-simulator-dev'
-  sqlDatabaseName: 'worldcup-db-dev'
+  # Azure resource names
+  - name: azureSubscription
+    value: 'azure-worldcup-simulator'
+  - name: frontendAppName
+    value: 'worldcup-simulator-frontend-dev'
+  - name: backendAppName
+    value: 'worldcup-simulator-backend-dev'
+  - name: resourceGroupName
+    value: 'rg-worldcup-simulator-dev'
+  - name: sqlServerName
+    value: 'sql-worldcup-simulator-dev'
+  - name: sqlDatabaseName
+    value: 'worldcup-db-dev'
   
-  # Environment-specific API URLs (currently using dev environment)
-  apiUrl: 'https://worldcup-simulator-backend-dev.azurewebsites.net'
-  environmentName: 'Development'
+  # Environment-specific API URLs
+  - name: apiUrl
+    value: 'https://worldcup-simulator-backend-dev.azurewebsites.net'
+  - name: environmentName
+    value: 'Development'
 
 stages:
   # ============================================
