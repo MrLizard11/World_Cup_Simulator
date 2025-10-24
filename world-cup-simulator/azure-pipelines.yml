@@ -62,7 +62,8 @@ stages:
           name: 'Default'  # Use self-hosted agent pool
         steps:
           - checkout: self
-            displayName: 'Checkout repository'
+            clean: true
+            displayName: 'Checkout repository (clean)'
           
           - task: NodeTool@0
             displayName: 'Install Node.js'
