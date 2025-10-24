@@ -73,20 +73,20 @@ stages:
             displayName: 'npm install'
             inputs:
               command: 'install'
-              workingDir: 'frontend'
+              workingDir: 'world-cup-simulator/frontend'
 
           - task: PowerShell@2
             displayName: 'Build and configure frontend'
             inputs:
               targetType: 'filePath'
-              filePath: 'frontend/deploy.ps1'
+              filePath: 'world-cup-simulator/frontend/deploy.ps1'
               arguments: '-ApiUrl "$(apiUrl)"'
-              workingDirectory: 'frontend'
+              workingDirectory: 'world-cup-simulator/frontend'
 
           - task: PublishBuildArtifacts@1
             displayName: 'Publish frontend artifact'
             inputs:
-              PathtoPublish: 'frontend/dist/world-cup-simulator'
+              PathtoPublish: 'world-cup-simulator/frontend/dist/world-cup-simulator'
               ArtifactName: 'frontend-drop'
               publishLocation: 'Container'
 
@@ -108,20 +108,20 @@ stages:
             displayName: 'Restore NuGet packages'
             inputs:
               command: 'restore'
-              projects: 'backend/**/*.csproj'
+              projects: 'world-cup-simulator/backend/**/*.csproj'
 
           - task: DotNetCoreCLI@2
             displayName: 'Build backend'
             inputs:
               command: 'build'
-              projects: 'backend/**/*.csproj'
+              projects: 'world-cup-simulator/backend/**/*.csproj'
               arguments: '--configuration $(buildConfiguration) --no-restore'
 
           - task: DotNetCoreCLI@2
             displayName: 'Run backend tests'
             inputs:
               command: 'test'
-              projects: 'backend/**/*Tests.csproj'
+              projects: 'world-cup-simulator/backend/**/*Tests.csproj'
               arguments: '--configuration $(buildConfiguration) --no-build --collect:"XPlat Code Coverage"'
 
           - task: DotNetCoreCLI@2
@@ -129,7 +129,7 @@ stages:
             inputs:
               command: 'publish'
               publishWebProjects: false
-              projects: 'backend/WorldCupSimulator.Api/WorldCupSimulator.Api.csproj'
+              projects: 'world-cup-simulator/backend/WorldCupSimulator.Api/WorldCupSimulator.Api.csproj'
               arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/backend'
               zipAfterPublish: true
 
@@ -190,7 +190,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                cd backend/WorldCupSimulator.Api
+                cd world-cup-simulator/backend/WorldCupSimulator.Api
                 dotnet ef database update --connection "$(ConnectionString)" --verbose
               workingDirectory: '$(System.DefaultWorkingDirectory)'
 
