@@ -61,8 +61,17 @@ stages:
         pool:
           name: 'Default'  # Use self-hosted agent pool
         steps:
+          - task: PowerShell@2
+            displayName: 'Clean agent workspace'
+            inputs:
+              targetType: 'inline'
+              script: |
+                Remove-Item -Path "$(Agent.BuildDirectory)\*" -Recurse -Force -ErrorAction SilentlyContinue
+                Write-Host "Workspace cleaned"
+          
           - checkout: self
             clean: true
+            fetchDepth: 1
             displayName: 'Checkout repository (clean)'
           
           - task: NodeTool@0
