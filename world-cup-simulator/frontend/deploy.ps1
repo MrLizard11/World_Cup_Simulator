@@ -137,5 +137,5 @@ Write-Host "  3. Ensure your backend is running at: $ApiUrl" -ForegroundColor Wh
 Write-Host "  4. Configure CORS on backend to allow your frontend domain" -ForegroundColor White
 Write-Host ""
 Write-Host "To change API URL without rebuilding:" -ForegroundColor Cyan
-Write-Host '  .\deploy.ps1 -ApiUrl "https://new-url.com" -SkipBuild' -ForegroundColor Gray
+Write-Host "  .\deploy.ps1 -ApiUrl https://new-url.com -SkipBuild" -ForegroundColor Gray
 Write-Host ""
