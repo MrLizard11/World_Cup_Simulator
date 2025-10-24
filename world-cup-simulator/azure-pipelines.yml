@@ -180,20 +180,22 @@ stages:
                 dotnet tool install --global dotnet-ef
                 dotnet ef --version
 
-          - task: AzureCLI@2
+          - task: PowerShell@2
             displayName: 'Get SQL connection string'
             inputs:
-              azureSubscription: $(azureSubscription)
-              scriptType: 'ps'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                $connectionString = az sql db show-connection-string `
-                  --client ado.net `
-                  --server $(sqlServerName) `
-                  --name $(sqlDatabaseName) `
-                  --output tsv
+              targetType: 'inline'
+              script: |
+                # Build connection string directly without Azure CLI (avoids CLI dependency issues)
+                # Uses variables from worldcup-simulator-secrets variable group
+                $sqlServer = "$(sqlServerName).database.windows.net"
+                $database = "$(sqlDatabaseName)"
+                $username = "$(sqlServerAdminUser)"
+                $password = "$(sqlServerAdminPassword)"
+                
+                $connectionString = "Server=tcp:$sqlServer,1433;Initial Catalog=$database;Persist Security Info=False;User ID=$username;Password=$password;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
                 
                 Write-Host "##vso[task.setvariable variable=ConnectionString;issecret=true]$connectionString"
+                Write-Host "Connection string configured for: $database on $sqlServer"
 
           - task: PowerShell@2
             displayName: 'Apply EF Core migrations'
