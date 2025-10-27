@@ -283,7 +283,16 @@ stages:
               artifactName: 'frontend-drop'
               downloadPath: '$(System.ArtifactsDirectory)'
 
-          # Deploy to Azure Static Web App
+          # Install SWA CLI and Deploy to Azure Static Web App
+          - task: PowerShell@2
+            displayName: 'Install SWA CLI'
+            inputs:
+              targetType: 'inline'
+              script: |
+                Write-Host "Installing Azure Static Web Apps CLI..." -ForegroundColor Cyan
+                npm install -g @azure/static-web-apps-cli
+                swa --version
+          
           - task: PowerShell@2
             displayName: 'Deploy Frontend to Static Web App'
             inputs:
@@ -293,6 +302,7 @@ stages:
                 $deploymentToken = "$(AZURE_STATIC_WEB_APPS_API_TOKEN)"
                 
                 Write-Host "Deploying frontend to Static Web App" -ForegroundColor Cyan
+                Write-Host "Artifact path: $artifactPath" -ForegroundColor Yellow
                 
                 if (-not (Test-Path $artifactPath)) {
                     Write-Host "ERROR: Artifact path not found: $artifactPath" -ForegroundColor Red
@@ -301,28 +311,30 @@ stages:
                 
                 # Check if deployment token is set
                 if ([string]::IsNullOrEmpty($deploymentToken)) {
-                    Write-Host "WARNING: AZURE_STATIC_WEB_APPS_API_TOKEN not configured" -ForegroundColor Yellow
-                    Write-Host "Skipping actual deployment. To deploy:" -ForegroundColor Yellow
-                    Write-Host "1. Get token from Azure Portal > Static Web Apps > Manage deployment token" -ForegroundColor Yellow
-                    Write-Host "2. Add AZURE_STATIC_WEB_APPS_API_TOKEN to variable group" -ForegroundColor Yellow
-                    exit 0
+                    Write-Host "ERROR: AZURE_STATIC_WEB_APPS_API_TOKEN not configured" -ForegroundColor Red
+                    Write-Host "Please add the deployment token to the variable group" -ForegroundColor Yellow
+                    exit 1
                 }
                 
                 # List files to deploy
                 $files = Get-ChildItem -Path $artifactPath -Recurse -File
-                Write-Host "Files ready for deployment: $($files.Count) files" -ForegroundColor Green
+                Write-Host "Files to deploy: $($files.Count) files" -ForegroundColor Green
                 
-                # Create deployment package
-                $zipPath = "$(Build.ArtifactStagingDirectory)/frontend-deploy.zip"
-                Write-Host "Creating deployment package..." -ForegroundColor Yellow
+                # Deploy using SWA CLI
+                Write-Host "Starting deployment with SWA CLI..." -ForegroundColor Cyan
                 
-                Add-Type -AssemblyName System.IO.Compression.FileSystem
-                [System.IO.Compression.ZipFile]::CreateFromDirectory($artifactPath, $zipPath)
-                Write-Host "Package created: $zipPath" -ForegroundColor Green
+                $env:SWA_CLI_DEPLOYMENT_TOKEN = $deploymentToken
                 
-                # Deploy via Oryx build API or direct file upload
-                Write-Host "Frontend artifacts prepared for Static Web App deployment" -ForegroundColor Green
-                Write-Host "Next: Configure Static Web App CI/CD or manually deploy via Azure Portal" -ForegroundColor Cyan
+                # Deploy the built Angular app
+                swa deploy $artifactPath --env production --deployment-token $deploymentToken --no-use-keychain
+                
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Host "✓ Frontend successfully deployed to Static Web App!" -ForegroundColor Green
+                    Write-Host "Frontend URL: https://blue-field-09630070f.3.azurestaticapps.net" -ForegroundColor Cyan
+                } else {
+                    Write-Host "✗ Deployment failed with exit code: $LASTEXITCODE" -ForegroundColor Red
+                    exit $LASTEXITCODE
+                }
 
           # Option B: Deploy to Azure App Service (alternative)
           # - task: AzureRmWebAppDeployment@4
