@@ -300,46 +300,34 @@ stages:
                 $files = Get-ChildItem -Path $artifactPath -Recurse -File
                 Write-Host "Files to deploy: $($files.Count) files" -ForegroundColor Green
                 
-                # Deploy using curl (if available) or direct REST API
-                if ($null -eq (Get-Command curl -ErrorAction SilentlyContinue)) {
-                    Write-Host "curl not found, using PowerShell HTTP client" -ForegroundColor Yellow
-                    
-                    # Create a zip file of the artifact
-                    $zipPath = "$(Build.ArtifactStagingDirectory)/frontend.zip"
-                    Add-Type -AssemblyName System.IO.Compression.FileSystem
-                    [System.IO.Compression.ZipFile]::CreateFromDirectory($artifactPath, $zipPath)
-                    Write-Host "Created deployment package: $zipPath" -ForegroundColor Green
-                    
-                    # Upload to Static Web Apps
-                    $headers = @{
-                        "Authorization" = "Bearer $deploymentToken"
-                    }
-                    
-                    $fileBytes = [System.IO.File]::ReadAllBytes($zipPath)
-                    $uri = "https://$staticWebAppName.azurestaticapps.net/api/deploy"
-                    
-                    try {
-                        $response = Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $fileBytes -ContentType "application/zip"
-                        Write-Host "Deployment succeeded!" -ForegroundColor Green
-                        Write-Host "Response: $response" -ForegroundColor Green
-                    }
-                    catch {
-                        Write-Host "Deployment failed: $_" -ForegroundColor Red
-                        exit 1
-                    }
-                } else {
-                    Write-Host "Using curl for deployment" -ForegroundColor Yellow
-                    
-                    # Create zip
-                    $zipPath = "$(Build.ArtifactStagingDirectory)/frontend.zip"
-                    Add-Type -AssemblyName System.IO.Compression.FileSystem
-                    [System.IO.Compression.ZipFile]::CreateFromDirectory($artifactPath, $zipPath)
-                    
-                    # Deploy with curl
-                    curl -X POST `
-                      -H "Authorization: Bearer $deploymentToken" `
-                      -F "file=@$zipPath" `
-                      https://$staticWebAppName.azurestaticapps.net/api/deploy
+                # Create a zip file of the artifact
+                $zipPath = "$(Build.ArtifactStagingDirectory)/frontend.zip"
+                Write-Host "Creating deployment package at: $zipPath" -ForegroundColor Yellow
+                
+                Add-Type -AssemblyName System.IO.Compression.FileSystem
+                [System.IO.Compression.ZipFile]::CreateFromDirectory($artifactPath, $zipPath)
+                Write-Host "Created deployment package: $zipPath" -ForegroundColor Green
+                
+                # Upload to Static Web Apps using PowerShell Invoke-RestMethod
+                $headers = @{
+                    "Authorization" = "Bearer $deploymentToken"
+                    "Content-Type" = "application/zip"
+                }
+                
+                $fileBytes = [System.IO.File]::ReadAllBytes($zipPath)
+                $uri = "https://$staticWebAppName.azurestaticapps.net/api/deploy"
+                
+                Write-Host "Uploading to: $uri" -ForegroundColor Yellow
+                
+                try {
+                    $response = Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $fileBytes
+                    Write-Host "Deployment succeeded!" -ForegroundColor Green
+                    Write-Host "Response: $response" -ForegroundColor Green
+                }
+                catch {
+                    Write-Host "Deployment failed: $_" -ForegroundColor Red
+                    Write-Host "Status Code: $($_.Exception.Response.StatusCode)" -ForegroundColor Red
+                    exit 1
                 }
                 
                 Write-Host "Frontend deployment complete!" -ForegroundColor Green
