@@ -10,6 +10,7 @@ trigger:
     include:
       - frontend/*
       - backend/*
+      - azure-pipelines.yml
 
 pr:
   branches:
@@ -275,6 +276,11 @@ stages:
             fetchDepth: 1
             displayName: 'Checkout repository (force clean)'
           
+          - task: NodeTool@0
+            displayName: 'Install Node.js'
+            inputs:
+              versionSpec: $(nodeVersion)
+          
           - task: DownloadBuildArtifacts@0
             displayName: 'Download frontend artifact'
             inputs:
@@ -290,6 +296,8 @@ stages:
               targetType: 'inline'
               script: |
                 Write-Host "Installing Azure Static Web Apps CLI..." -ForegroundColor Cyan
+                Write-Host "Node version: $(node --version)" -ForegroundColor Yellow
+                Write-Host "npm version: $(npm --version)" -ForegroundColor Yellow
                 npm install -g @azure/static-web-apps-cli
                 swa --version
           
