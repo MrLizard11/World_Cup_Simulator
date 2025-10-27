@@ -278,59 +278,16 @@ stages:
               artifactName: 'frontend-drop'
               downloadPath: '$(System.ArtifactsDirectory)'
 
-          # Deploy to Azure Static Web Apps using PowerShell
-          - task: PowerShell@2
-            displayName: 'Deploy to Azure Static Web Apps'
+          # Deploy to Azure App Service (Frontend)
+          - task: AzureRmWebAppDeployment@4
+            displayName: 'Deploy Frontend to App Service'
             inputs:
-              targetType: 'inline'
-              script: |
-                $artifactPath = "$(System.ArtifactsDirectory)/frontend-drop"
-                $deploymentToken = "$(AZURE_STATIC_WEB_APPS_API_TOKEN)"
-                $staticWebAppName = "$(frontendAppName)"
-                
-                Write-Host "Deploying frontend from: $artifactPath" -ForegroundColor Cyan
-                Write-Host "Target: $staticWebAppName" -ForegroundColor Cyan
-                
-                if (-not (Test-Path $artifactPath)) {
-                    Write-Host "ERROR: Artifact path not found: $artifactPath" -ForegroundColor Red
-                    exit 1
-                }
-                
-                # Get list of files
-                $files = Get-ChildItem -Path $artifactPath -Recurse -File
-                Write-Host "Files to deploy: $($files.Count) files" -ForegroundColor Green
-                
-                # Create a zip file of the artifact
-                $zipPath = "$(Build.ArtifactStagingDirectory)/frontend.zip"
-                Write-Host "Creating deployment package at: $zipPath" -ForegroundColor Yellow
-                
-                Add-Type -AssemblyName System.IO.Compression.FileSystem
-                [System.IO.Compression.ZipFile]::CreateFromDirectory($artifactPath, $zipPath)
-                Write-Host "Created deployment package: $zipPath" -ForegroundColor Green
-                
-                # Upload to Static Web Apps using PowerShell Invoke-RestMethod
-                $headers = @{
-                    "Authorization" = "Bearer $deploymentToken"
-                    "Content-Type" = "application/zip"
-                }
-                
-                $fileBytes = [System.IO.File]::ReadAllBytes($zipPath)
-                $uri = "https://$staticWebAppName.azurestaticapps.net/api/deploy"
-                
-                Write-Host "Uploading to: $uri" -ForegroundColor Yellow
-                
-                try {
-                    $response = Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $fileBytes
-                    Write-Host "Deployment succeeded!" -ForegroundColor Green
-                    Write-Host "Response: $response" -ForegroundColor Green
-                }
-                catch {
-                    Write-Host "Deployment failed: $_" -ForegroundColor Red
-                    Write-Host "Status Code: $($_.Exception.Response.StatusCode)" -ForegroundColor Red
-                    exit 1
-                }
-                
-                Write-Host "Frontend deployment complete!" -ForegroundColor Green
+              ConnectionType: 'AzureRM'
+              azureSubscription: $(azureSubscription)
+              appType: 'webApp'
+              WebAppName: $(frontendAppName)
+              packageForLinux: '$(System.ArtifactsDirectory)/frontend-drop'
+              RuntimeStack: 'NODE|20-lts'
 
           # Option B: Deploy to Azure App Service (alternative)
           # - task: AzureRmWebAppDeployment@4
