@@ -32,7 +32,7 @@ variables:
   - name: azureSubscription
     value: 'azure-worldcup-simulator'
   - name: frontendAppName
-    value: 'worldcup-simulator-frontend-dev'
+    value: 'blue-field-09630070f'
   - name: backendAppName
     value: 'worldcup-simulator-backend-dev'
   - name: resourceGroupName
@@ -44,7 +44,7 @@ variables:
   
   # Environment-specific API URLs
   - name: apiUrl
-    value: 'https://worldcup-simulator-backend-dev.azurewebsites.net'
+    value: 'https://worldcup-simulator-backend-dev-cwbugtd3hja7d7a8.centralus-01.azurewebsites.net'
   - name: environmentName
     value: 'Development'
 
@@ -388,7 +388,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                $frontendUrl = "https://$(frontendAppName).azurewebsites.net"
+                $frontendUrl = "https://blue-field-09630070f.3.azurestaticapps.net"
                 Write-Host "Testing frontend at: $frontendUrl" -ForegroundColor Cyan
                 
                 $maxRetries = 5
