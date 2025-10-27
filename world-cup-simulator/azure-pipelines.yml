@@ -270,6 +270,11 @@ stages:
         pool:
           name: 'Default'  # Self-hosted agent
         steps:
+          - checkout: self
+            clean: true
+            fetchDepth: 1
+            displayName: 'Checkout repository (force clean)'
+          
           - task: DownloadBuildArtifacts@0
             displayName: 'Download frontend artifact'
             inputs:
