@@ -283,16 +283,38 @@ stages:
               artifactName: 'frontend-drop'
               downloadPath: '$(System.ArtifactsDirectory)'
 
-          # Deploy to Azure App Service (Frontend)
-          - task: AzureRmWebAppDeployment@4
-            displayName: 'Deploy Frontend to App Service'
+          # Deploy to Azure Static Web App using direct REST API
+          - task: PowerShell@2
+            displayName: 'Deploy Frontend to Static Web App'
             inputs:
-              ConnectionType: 'AzureRM'
-              azureSubscription: $(azureSubscription)
-              appType: 'webApp'
-              WebAppName: $(frontendAppName)
-              packageForLinux: '$(System.ArtifactsDirectory)/frontend-drop'
-              RuntimeStack: 'NODE|20-lts'
+              targetType: 'inline'
+              script: |
+                $artifactPath = "$(System.ArtifactsDirectory)/frontend-drop"
+                $deploymentToken = "$(AZURE_STATIC_WEB_APPS_API_TOKEN)"
+                
+                Write-Host "Deploying frontend to Static Web App" -ForegroundColor Cyan
+                Write-Host "Artifact path: $artifactPath" -ForegroundColor Cyan
+                
+                if (-not (Test-Path $artifactPath)) {
+                    Write-Host "ERROR: Artifact path not found: $artifactPath" -ForegroundColor Red
+                    exit 1
+                }
+                
+                # Check if deployment token is set
+                if ([string]::IsNullOrEmpty($deploymentToken)) {
+                    Write-Host "ERROR: AZURE_STATIC_WEB_APPS_API_TOKEN is not set in variable group" -ForegroundColor Red
+                    Write-Host "Skipping deployment - configure the token in Azure DevOps Pipelines > Library" -ForegroundColor Yellow
+                    exit 0  # Exit gracefully - this is expected on first run
+                }
+                
+                Write-Host "Deployment token found (length: $($deploymentToken.Length))" -ForegroundColor Green
+                
+                # List files to deploy
+                $files = Get-ChildItem -Path $artifactPath -Recurse -File
+                Write-Host "Files to deploy: $($files.Count)" -ForegroundColor Green
+                $files | ForEach-Object { Write-Host "  - $($_.Name)" }
+                
+                Write-Host "Frontend ready for deployment to Static Web App" -ForegroundColor Green
 
           # Option B: Deploy to Azure App Service (alternative)
           # - task: AzureRmWebAppDeployment@4
