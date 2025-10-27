@@ -278,13 +278,71 @@ stages:
               artifactName: 'frontend-drop'
               downloadPath: '$(System.ArtifactsDirectory)'
 
-          # Option A: Deploy to Azure Static Web Apps (recommended for Angular)
-          - task: AzureStaticWebApp@0
+          # Deploy to Azure Static Web Apps using PowerShell
+          - task: PowerShell@2
             displayName: 'Deploy to Azure Static Web Apps'
             inputs:
-              app_location: '$(System.ArtifactsDirectory)/frontend-drop'
-              skip_app_build: true
-              azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN)
+              targetType: 'inline'
+              script: |
+                $artifactPath = "$(System.ArtifactsDirectory)/frontend-drop"
+                $deploymentToken = "$(AZURE_STATIC_WEB_APPS_API_TOKEN)"
+                $staticWebAppName = "$(frontendAppName)"
+                
+                Write-Host "Deploying frontend from: $artifactPath" -ForegroundColor Cyan
+                Write-Host "Target: $staticWebAppName" -ForegroundColor Cyan
+                
+                if (-not (Test-Path $artifactPath)) {
+                    Write-Host "ERROR: Artifact path not found: $artifactPath" -ForegroundColor Red
+                    exit 1
+                }
+                
+                # Get list of files
+                $files = Get-ChildItem -Path $artifactPath -Recurse -File
+                Write-Host "Files to deploy: $($files.Count) files" -ForegroundColor Green
+                
+                # Deploy using curl (if available) or direct REST API
+                if ($null -eq (Get-Command curl -ErrorAction SilentlyContinue)) {
+                    Write-Host "curl not found, using PowerShell HTTP client" -ForegroundColor Yellow
+                    
+                    # Create a zip file of the artifact
+                    $zipPath = "$(Build.ArtifactStagingDirectory)/frontend.zip"
+                    Add-Type -AssemblyName System.IO.Compression.FileSystem
+                    [System.IO.Compression.ZipFile]::CreateFromDirectory($artifactPath, $zipPath)
+                    Write-Host "Created deployment package: $zipPath" -ForegroundColor Green
+                    
+                    # Upload to Static Web Apps
+                    $headers = @{
+                        "Authorization" = "Bearer $deploymentToken"
+                    }
+                    
+                    $fileBytes = [System.IO.File]::ReadAllBytes($zipPath)
+                    $uri = "https://$staticWebAppName.azurestaticapps.net/api/deploy"
+                    
+                    try {
+                        $response = Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $fileBytes -ContentType "application/zip"
+                        Write-Host "Deployment succeeded!" -ForegroundColor Green
+                        Write-Host "Response: $response" -ForegroundColor Green
+                    }
+                    catch {
+                        Write-Host "Deployment failed: $_" -ForegroundColor Red
+                        exit 1
+                    }
+                } else {
+                    Write-Host "Using curl for deployment" -ForegroundColor Yellow
+                    
+                    # Create zip
+                    $zipPath = "$(Build.ArtifactStagingDirectory)/frontend.zip"
+                    Add-Type -AssemblyName System.IO.Compression.FileSystem
+                    [System.IO.Compression.ZipFile]::CreateFromDirectory($artifactPath, $zipPath)
+                    
+                    # Deploy with curl
+                    curl -X POST `
+                      -H "Authorization: Bearer $deploymentToken" `
+                      -F "file=@$zipPath" `
+                      https://$staticWebAppName.azurestaticapps.net/api/deploy
+                }
+                
+                Write-Host "Frontend deployment complete!" -ForegroundColor Green
 
           # Option B: Deploy to Azure App Service (alternative)
           # - task: AzureRmWebAppDeployment@4
